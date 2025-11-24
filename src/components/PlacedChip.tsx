@@ -1,0 +1,73 @@
+// src/components/PlacedChip.tsx
+import { useDraggable } from "@dnd-kit/core";
+import type { Subject, RoomsEnroll } from "../types/examPlanner";
+import { MastersLines } from "./MastersLines";
+
+export function PlacedChip({
+  pid,
+  dateIso,
+  slotIndex,
+  s,
+  extra,
+}: {
+  pid: number;
+  dateIso: string;
+  slotIndex: number;
+  s: Subject;
+  extra?: RoomsEnroll;
+}) {
+  // id especial per moure entre cel·les
+  const dragId = `placed:${pid}:${dateIso}:${slotIndex}:${s.id}`;
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: dragId });
+
+  const hasRooms = extra && extra.rooms && extra.rooms.length > 0;
+  const hasStud =
+    extra &&
+    typeof extra.students === "number" &&
+    !Number.isNaN(extra.students);
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`relative p-2 rounded-xl border shadow-sm bg-gray-50 ${
+        isDragging ? "opacity-70 ring-2 ring-indigo-400" : ""
+      }`}
+      style={{
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+      }}
+      title="Arrossega per moure a una altra franja"
+    >
+      <div className="text-sm font-semibold leading-tight">
+        {s.sigles} · {s.codi}
+      </div>
+
+      {s.nivell ? (
+        <div className="text-xs opacity-80">Nivell: {s.nivell}</div>
+      ) : (
+        <MastersLines s={s} />
+      )}
+
+      {(hasRooms || hasStud) && (
+        <div className="mt-1 space-y-0.5 text-xs">
+          {hasRooms && (
+            <div>
+              <span className="font-medium">Aules/Rooms:</span>{" "}
+              {extra!.rooms.join(", ")}
+            </div>
+          )}
+          {hasStud && (
+            <div>
+              <span className="font-medium">Estudiants/Students:</span>{" "}
+              {extra!.students}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
