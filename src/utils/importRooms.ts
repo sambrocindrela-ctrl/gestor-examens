@@ -76,10 +76,12 @@ export function importRooms(
     codi: string,
     sigles: string
   ): Subject | undefined => {
-    const c = codi.trim();
-    const sgl = sigles.trim();
+    const c = codi.trim().toLowerCase();
+    const sgl = sigles.trim().toLowerCase();
     return subjects.find(
-      (s) => (c && s.codi === c) || (sgl && s.sigles === sgl)
+      (s) =>
+        (c && s.codi.trim().toLowerCase() === c) ||
+        (sgl && s.sigles.trim().toLowerCase() === sgl)
     );
   };
 
@@ -87,10 +89,10 @@ export function importRooms(
     `${dateIso}|${slotIndex}`;
 
   // Còpia profunda segura de roomsData (pid → cellKey → subjectId → {rooms,students})
-  const nextRooms: RoomsDataPerPeriod =
-    typeof structuredClone === "function"
-      ? structuredClone(roomsData || {})
-      : (JSON.parse(JSON.stringify(roomsData || {})) as RoomsDataPerPeriod);
+  // Note: Using JSON.parse/stringify instead of structuredClone to avoid issues with Vue proxies
+  const nextRooms: RoomsDataPerPeriod = JSON.parse(
+    JSON.stringify(roomsData || {})
+  ) as RoomsDataPerPeriod;
 
   let attached = 0;
   let skipped = 0;
@@ -98,16 +100,16 @@ export function importRooms(
   for (const r of rows) {
     // --- Codi / sigles ---
     const codi = String(
-      r.codi ?? r.CODI ?? r.codigo ?? r.CODIGO ?? r.code ?? ""
+      r.codi ?? r.CODI ?? r.codigo ?? r.CODIGO ?? r.code ?? r["\ufeffcodi"] ?? r["\ufeffCODI"] ?? ""
     ).trim();
     const sigles = String(
       r.sigles ??
-        r.SIGLES ??
-        r.siglas ??
-        r.SIGLAS ??
-        r.nom ??
-        r.NOM ??
-        ""
+      r.SIGLES ??
+      r.siglas ??
+      r.SIGLAS ??
+      r.nom ??
+      r.NOM ??
+      ""
     ).trim();
     if (!codi && !sigles) {
       skipped++;
@@ -124,6 +126,7 @@ export function importRooms(
     const pidRaw =
       r.period_id ??
       r.PERIOD_ID ??
+      r["\ufeffperiod_id"] ??
       r.PeriodId ??
       r.periode ??
       r.PERIODE ??
@@ -139,16 +142,18 @@ export function importRooms(
 
     // --- Data d'examen ---
     const dateIso = normDate(
+      r.data_examen ??
+      r.DATA_EXAMEN ??
+      r["﻿data_examen"] ??
       r["dia d'examen"] ??
-        r["dia examen"] ??
-        r.data_examen ??
-        r.dia ??
-        r.DIA ??
-        r.fecha ??
-        r.FECHA ??
-        r.data ??
-        r.DATA ??
-        r.day
+      r["dia examen"] ??
+      r.dia ??
+      r.DIA ??
+      r.fecha ??
+      r.FECHA ??
+      r.data ??
+      r.DATA ??
+      r.day
     );
     if (!dateIso) {
       skipped++;
@@ -157,23 +162,25 @@ export function importRooms(
 
     // --- Franja horària ---
     const start = normTime(
+      r.hora_inici ??
+      r.HORA_INICI ??
+      r["﻿hora_inici"] ??
+      r.hora_inici_examen ??
       r["hora d'inici de l'examen"] ??
-        r["hora inici examen"] ??
-        r.hora_inici_examen ??
-        r.hora_inici ??
-        r.inici ??
-        r.start ??
-        r.HORA_INICI ??
-        r.HORA_INI
+      r["hora inici examen"] ??
+      r.inici ??
+      r.start ??
+      r.HORA_INI
     );
     const end = normTime(
+      r.hora_fi ??
+      r.HORA_FI ??
+      r["﻿hora_fi"] ??
+      r.hora_fi_examen ??
       r["hora de fi de l'examen"] ??
-        r["hora fi examen"] ??
-        r.hora_fi_examen ??
-        r.hora_fi ??
-        r.fi ??
-        r.end ??
-        r.HORA_FI
+      r["hora fi examen"] ??
+      r.fi ??
+      r.end
     );
     if (!start || !end) {
       skipped++;
@@ -195,7 +202,7 @@ export function importRooms(
 
     // --- Aula ---
     const aula = String(
-      r.aula ?? r.AULA ?? r.sala ?? r.SALA ?? r.room ?? r.ROOM ?? ""
+      r.aula ?? r.AULA ?? r["﻿aula"] ?? r.sala ?? r.SALA ?? r.room ?? r.ROOM ?? ""
     ).trim();
     if (!aula) {
       skipped++;
@@ -204,10 +211,11 @@ export function importRooms(
 
     // --- Estudiants ---
     const nStudRaw =
-      r["número d'estudiants matriculats"] ??
-      r["num_estudiants"] ??
       r.estudiants ??
       r.ESTUDIANTS ??
+      r["﻿estudiants"] ??
+      r["número d'estudiants matriculats"] ??
+      r["num_estudiants"] ??
       r.matriculats ??
       r.MATRICULATS ??
       r.matriculados ??

@@ -20,7 +20,7 @@ export function importSubjectsReplace(rows: any[]) {
 
   for (const r of rows) {
     const codi =
-      r.codi ?? r.codigo ?? r.CODI ?? r.CODIGO ?? r.code;
+      r.codi ?? r.codigo ?? r.CODI ?? r.CODIGO ?? r.code ?? r["﻿codi"] ?? r["﻿CODI"];
     const sigles =
       r.sigles ?? r.SIGLES ?? r.siglas ?? r.SIGLAS;
     const nivell = (
@@ -100,8 +100,8 @@ export function importSubjectsReplace(rows: any[]) {
         : tipusRaw === "REAVALUACIO" ||
           tipusRaw === "REAVALUACIÓ" ||
           tipusRaw === "REAVALUACION"
-        ? "REAVALUACIÓ"
-        : "PARCIAL";
+          ? "REAVALUACIÓ"
+          : "PARCIAL";
 
     const startStr =
       parseDateFromCell(
@@ -168,9 +168,9 @@ export function importSubjectsReplace(rows: any[]) {
     );
     const filaQuad = normalizeQuad(
       r.quadrimestre ??
-        r.QUADRIMESTRE ??
-        r.quad ??
-        r.QUAD
+      r.QUADRIMESTRE ??
+      r.quad ??
+      r.QUAD
     );
 
     if (Number.isFinite(pid)) {

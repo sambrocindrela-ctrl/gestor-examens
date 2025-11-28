@@ -24,9 +24,11 @@ export function importSubjectsMerge(
     periods: Period[];
     allowedPeriodsBySubject: Record<string, number[]>;
     slotsPerPeriod: SlotsPerPeriod;
+    assignedPerPeriod: any;
+    roomsData: any;
   }
 ) {
-  const { subjects, periods, allowedPeriodsBySubject, slotsPerPeriod } = current;
+  const { subjects, periods, allowedPeriodsBySubject, slotsPerPeriod, assignedPerPeriod, roomsData } = current;
 
   // Índexos auxiliars actuals
   const subjById = new Map(subjects.map((s) => [s.id, s] as const));
@@ -48,7 +50,7 @@ export function importSubjectsMerge(
   let addedPeriods = 0;
 
   for (const r of rows) {
-    const codi = r.codi ?? r.codigo ?? r.CODI ?? r.CODIGO ?? r.code;
+    const codi = r.codi ?? r.codigo ?? r.CODI ?? r.CODIGO ?? r.code ?? r["\ufeffcodi"] ?? r["\ufeffCODI"];
     const sigles = r.sigles ?? r.SIGLES ?? r.siglas ?? r.SIGLAS;
     if (!codi && !sigles) continue;
 
@@ -146,37 +148,68 @@ export function importSubjectsMerge(
       r.PERIOD;
     const pid = pidRaw ? Number(pidRaw) : NaN;
 
-    if (Number.isFinite(pid) && pid >= 1) {
-      // Afegir període si no existeix
-      if (!nextPeriods.find((p) => p.id === pid)) {
-        const tipusRaw = (
-          r.period_tipus ??
-          r.PERIOD_TIPUS ??
-          r.tipo ??
-          r.TIPO ??
-          ""
-        )
-          .toString()
-          .toUpperCase();
 
-        const tipus: TipusPeriode =
-          tipusRaw === "FINAL"
-            ? "FINAL"
-            : tipusRaw === "REAVALUACIO" ||
-              tipusRaw === "REAVALUACIÓ" ||
-              tipusRaw === "REAVALUACION"
+    if (Number.isFinite(pid) && pid >= 1) {
+      const tipusRaw = (
+        r.period_tipus ??
+        r.PERIOD_TIPUS ??
+        r.tipo ??
+        r.TIPO ??
+        ""
+      )
+        .toString()
+        .toUpperCase();
+
+      const tipus: TipusPeriode =
+        tipusRaw === "FINAL"
+          ? "FINAL"
+          : tipusRaw === "REAVALUACIO" ||
+            tipusRaw === "REAVALUACIÓ" ||
+            tipusRaw === "REAVALUACION"
             ? "REAVALUACIÓ"
             : "PARCIAL";
 
-        const startStr =
-          parseDateFromCell(
-            r.period_inici ?? r.PERIOD_INICI ?? r.start
-          ) || "";
-        const endStr =
-          parseDateFromCell(
-            r.period_fi ?? r.PERIOD_FI ?? r.end
-          ) || "";
+      const startStr =
+        parseDateFromCell(
+          r.period_inici ?? r.PERIOD_INICI ?? r.start
+        ) || "";
+      const endStr =
+        parseDateFromCell(
+          r.period_fi ?? r.PERIOD_FI ?? r.end
+        ) || "";
 
+      // Parse slots from CSV
+      const parseSlotsLocal = (raw: any) => {
+        if (!raw) return null;
+        const parsed = String(raw)
+          .split(/[;,|]/)
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .map((pair) => {
+            const mm = pair.match(
+              /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/
+            );
+            if (!mm) return null;
+            const [_, a, b] = mm;
+            const pad = (h: string) =>
+              h
+                .split(":")
+                .map((x) => x.padStart(2, "0"))
+                .join(":");
+            return { start: pad(a), end: pad(b) };
+          })
+          .filter((slot): slot is { start: string; end: string } => slot !== null);
+        return parsed.length > 0 ? parsed : null;
+      };
+
+      const slotsFromCSV = parseSlotsLocal(
+        r.period_slots ?? r.PERIOD_SLOTS ?? r.slots
+      );
+
+      const existingPeriod = nextPeriods.find((p) => p.id === pid);
+
+      if (!existingPeriod) {
+        // Add new period
         nextPeriods.push({
           id: pid,
           label: `Període ${pid}`,
@@ -186,10 +219,24 @@ export function importSubjectsMerge(
           blackouts: [],
         });
 
-        nextSlotsPerPeriod[pid] =
-          nextSlotsPerPeriod[pid] ?? [{ start: "08:00", end: "10:00" }];
-
+        nextSlotsPerPeriod[pid] = slotsFromCSV || [{ start: "08:00", end: "10:00" }];
         addedPeriods++;
+      } else {
+        // Update existing period
+        if (tipus && existingPeriod.tipus !== tipus) {
+          existingPeriod.tipus = tipus;
+        }
+        if (startStr && existingPeriod.startStr !== startStr) {
+          existingPeriod.startStr = startStr;
+        }
+        if (endStr && existingPeriod.endStr !== endStr) {
+          existingPeriod.endStr = endStr;
+        }
+
+        // Update slots if provided in CSV
+        if (slotsFromCSV && slotsFromCSV.length > 0) {
+          nextSlotsPerPeriod[pid] = slotsFromCSV;
+        }
       }
 
       const arr = new Set(nextAllowed[subjectId] ?? []);
@@ -203,11 +250,74 @@ export function importSubjectsMerge(
   // Ordenem períodes pel seu id
   nextPeriods.sort((a, b) => a.id - b.id);
 
+  // Remap assignments and rooms when slots change
+  const nextAssignedPerPeriod = JSON.parse(JSON.stringify(assignedPerPeriod));
+  const nextRoomsData = JSON.parse(JSON.stringify(roomsData));
+
+  // For each period where slots changed, remap the assignments
+  for (const [pidStr, newSlots] of Object.entries(nextSlotsPerPeriod)) {
+    const pid = Number(pidStr);
+    const oldSlots = slotsPerPeriod[pid];
+
+    // Skip if no old slots or slots haven't changed
+    if (!oldSlots || JSON.stringify(oldSlots) === JSON.stringify(newSlots)) {
+      continue;
+    }
+
+    // Create mapping from old slot index to new slot index based on matching times
+    const slotIndexMap = new Map<number, number>();
+    for (let oldIdx = 0; oldIdx < oldSlots.length; oldIdx++) {
+      const oldSlot = oldSlots[oldIdx];
+      const newIdx = newSlots.findIndex(
+        (s) => s.start === oldSlot.start && s.end === oldSlot.end
+      );
+      if (newIdx !== -1) {
+        slotIndexMap.set(oldIdx, newIdx);
+      }
+    }
+
+    // Remap assignments for this period
+    if (nextAssignedPerPeriod[pid]) {
+      const oldAssigned = { ...nextAssignedPerPeriod[pid] };
+      nextAssignedPerPeriod[pid] = {};
+
+      for (const [cellKey, subjectIds] of Object.entries(oldAssigned)) {
+        const [dateIso, oldSlotIdxStr] = cellKey.split("|");
+        const oldSlotIdx = Number(oldSlotIdxStr);
+        const newSlotIdx = slotIndexMap.get(oldSlotIdx);
+
+        if (newSlotIdx !== undefined) {
+          const newCellKey = `${dateIso}|${newSlotIdx}`;
+          nextAssignedPerPeriod[pid][newCellKey] = subjectIds;
+        }
+      }
+    }
+
+    // Remap rooms for this period
+    if (nextRoomsData[pid]) {
+      const oldRooms = { ...nextRoomsData[pid] };
+      nextRoomsData[pid] = {};
+
+      for (const [cellKey, roomsMap] of Object.entries(oldRooms)) {
+        const [dateIso, oldSlotIdxStr] = cellKey.split("|");
+        const oldSlotIdx = Number(oldSlotIdxStr);
+        const newSlotIdx = slotIndexMap.get(oldSlotIdx);
+
+        if (newSlotIdx !== undefined) {
+          const newCellKey = `${dateIso}|${newSlotIdx}`;
+          nextRoomsData[pid][newCellKey] = roomsMap;
+        }
+      }
+    }
+  }
+
   return {
     nextSubjects,
     nextPeriods,
     nextAllowed,
     nextSlotsPerPeriod,
+    nextAssignedPerPeriod,
+    nextRoomsData,
     addedSubjects,
     updatedSubjects,
     addedPeriods,
