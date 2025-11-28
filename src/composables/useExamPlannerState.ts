@@ -14,7 +14,6 @@ import type {
   RoomsEnroll,
   AssignedMap,
   RoomsMapPerCell,
-  TipusPeriode,
 } from "../types/examPlanner";
 
 /* ---------- Helpers ---------- */
@@ -119,7 +118,7 @@ export function useExamPlannerState() {
   function removePeriod(id: number) {
     if (!confirm("Segur que vols eliminar aquest període?")) return;
     periods.value = periods.value.filter((p) => p.id !== id);
-    
+
     const apCopy = { ...assignedPerPeriod.value };
     delete apCopy[id];
     assignedPerPeriod.value = apCopy;
@@ -138,8 +137,7 @@ export function useExamPlannerState() {
     if (!subj) return;
     if (
       !confirm(
-        `Eliminar definitivament "${
-          subj.sigles || subj.codi
+        `Eliminar definitivament "${subj.sigles || subj.codi
         }" del catàleg?\nS’esborrarà de la safata, del calendari i de les dades d’aules/estudiants.`
       )
     ) {
@@ -329,7 +327,7 @@ export function useExamPlannerState() {
     allowedPeriodsBySubject,
     hiddenSubjectIds,
     lastDeleted,
-    
+
     addPeriod,
     removePeriod,
     deleteSubjectPermanently,

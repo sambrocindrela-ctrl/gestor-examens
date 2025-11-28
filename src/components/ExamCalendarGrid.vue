@@ -165,8 +165,8 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
                   slotIndex,
                   (assignedPerPeriod[activePid] ?? {})[cellKey(iso(addDays(week.mon, i - 1)), slotIndex)] ?? []
                 )"
-                @remove-one="(sid) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
-                @update-list="(newList) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)"
+                @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
+                @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)"
               />
             </tr>
           </tbody>
