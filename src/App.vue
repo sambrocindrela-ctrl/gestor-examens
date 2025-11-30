@@ -361,7 +361,7 @@ function handleImportRoomsCSV(ev: Event) {
 
       <!-- Configuració del període actiu (informació compacta) -->
       <div v-if="activePeriod" class="p-4 rounded-2xl border shadow-sm bg-white mt-6">
-        <div class="flex flex-wrap items-center gap-6 text-sm">
+        <div class="flex flex-wrap items-center gap-6 text-lg">
           <!-- Period info -->
           <div class="flex items-center gap-2">
             <span class="font-semibold text-gray-700">Període:</span>
@@ -377,7 +377,7 @@ function handleImportRoomsCSV(ev: Event) {
               <span
                 v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
                 :key="i"
-                class="px-2 py-1 bg-gray-100 rounded text-xs font-mono"
+                class="px-2 py-1 bg-gray-100 rounded text-sm font-mono"
               >
                 {{ s.start }}–{{ s.end }}
               </span>
