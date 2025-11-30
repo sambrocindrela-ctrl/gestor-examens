@@ -38,8 +38,23 @@ const totalSubjects = props.subjects.length;
 const availableCount = props.availableSubjects.length;
 const assignedCount = totalSubjects - availableCount;
 
-function getTipusLabel(tipus: string) {
-  return tipus === "FINAL" ? "FINAL" : tipus === "REAVALUACIÓ" ? "REAVALUACIÓ" : "PARCIAL";
+function getPeriodLabel(p: Period) {
+  const tipus = p.tipus === "FINAL" ? "FINAL" : p.tipus === "REAVALUACIÓ" ? "REAVALUACIÓ" : "PARCIAL";
+  const curs = p.curs ?? '';
+  const quad = p.quad ?? '';
+  
+  // Build label: TIPUS CURS-QUADRIMESTRE
+  let label = tipus;
+  if (curs) {
+    label += ` ${curs}`;
+    if (quad) {
+      label += `-${quad}`;
+    }
+  } else if (quad) {
+    label += ` -${quad}`;
+  }
+  
+  return label;
 }
 </script>
 
@@ -165,7 +180,7 @@ function getTipusLabel(tipus: string) {
               : 'bg-white hover:bg-gray-50'
           ]"
         >
-          {{ getTipusLabel(p.tipus) }}
+          {{ getPeriodLabel(p) }}
         </button>
 
         <button

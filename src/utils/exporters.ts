@@ -10,6 +10,7 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
+  ShadingType,
 } from "docx";
 import {
   format,
@@ -228,6 +229,50 @@ function formatSubjectForCell(s: Subject, extra?: RoomsEnroll): string {
   return lines.join("\n");
 }
 
+/**
+ * Determine cell background color based on slot start time
+ * Returns RGB hex color without the # prefix
+ */
+function getSlotColor(slotStart: string, isDisabled: boolean = false): string {
+  if (isDisabled) {
+    // Colour for days with no exam: #D9D9D9
+    return "D9D9D9";
+  }
+
+  // Parse time (format: "HH:mm")
+  const [hoursStr, minutesStr] = slotStart.split(":");
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  const totalMinutes = hours * 60 + minutes;
+
+  // Time thresholds in minutes
+  const time11_00 = 11 * 60; // 11:00
+  const time10_50 = 10 * 60 + 50; // 10:50
+  const time14_00 = 14 * 60; // 14:00
+  const time13_59 = 13 * 60 + 59; // 13:59
+  const time17_00 = 17 * 60; // 17:00
+
+  // First slot in the morning (beginning before 11:00 h): #FFFFCC
+  if (totalMinutes < time11_00) {
+    return "FFFFCC";
+  }
+  // Second slot in the morning (beginning after 10:50 h and before 14:00 h): #FFFF99
+  else if (totalMinutes > time10_50 && totalMinutes < time14_00) {
+    return "FFFF99";
+  }
+  // First slot in the afternoon (beginning after 13:59 h and before 17:00 h): #DBE4F0
+  else if (totalMinutes > time13_59 && totalMinutes < time17_00) {
+    return "DBE4F0";
+  }
+  // Second slot in the afternoon (beginning at 17:00 h or later): #B9CDE5
+  else if (totalMinutes >= time17_00) {
+    return "B9CDE5";
+  }
+
+  // Default fallback (shouldn't happen with normal schedules)
+  return "FFFFFF";
+}
+
 function buildSubjectParagraphsForWord(
   s: Subject,
   extra?: RoomsEnroll
@@ -329,7 +374,6 @@ export function exportPlannerExcel(args: {
   try {
     const wb = XLSX.utils.book_new();
 
-    const slotColors = ["E3F2FD", "E8F5E9", "FFF3E0", "F3E5F5", "E0F7FA", "FBE9E7"];
     const dayLabelsCat = ["Dl", "Dt", "Dc", "Dj", "Dv"];
     const dayLabelsEn = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
@@ -341,6 +385,7 @@ export function exportPlannerExcel(args: {
       const roomsForPeriod = roomsData[p.id] ?? {};
       const rows: any[][] = [];
       const slotIndexPerRow: number[] = [];
+      const weekStartPerRow: (Date | null)[] = [];
 
       const start = mondayOfWeek(parseISO(p.startStr));
       const end = fridayOfWeek(parseISO(p.endStr));
@@ -350,6 +395,7 @@ export function exportPlannerExcel(args: {
         if (rows.length > 0) {
           rows.push([]);
           slotIndexPerRow.push(-1);
+          weekStartPerRow.push(null);
         }
 
         const headerWeek: any[] = ["Franja horària / Time slot"];
@@ -361,6 +407,7 @@ export function exportPlannerExcel(args: {
         }
         rows.push(headerWeek);
         slotIndexPerRow.push(-1);
+        weekStartPerRow.push(null);
 
         slots.forEach((slot, si) => {
           const row: any[] = [`${slot.start}-${slot.end}`];
@@ -387,6 +434,7 @@ export function exportPlannerExcel(args: {
 
           rows.push(row);
           slotIndexPerRow.push(si);
+          weekStartPerRow.push(weekStart);
         });
 
         weekStart = addDays(weekStart, 7);
@@ -419,11 +467,24 @@ export function exportPlannerExcel(args: {
       for (let r = 0; r <= range.e.r; r++) {
         const si = slotIndexPerRow[r];
         if (si < 0) continue;
-        const color = slotColors[si % slotColors.length];
+        const slot = slots[si];
+        if (!slot) continue;
+        const rowWeekStart = weekStartPerRow[r];
+        if (!rowWeekStart) continue;
+
         for (let c = 1; c <= 5; c++) {
           const addr = XLSX.utils.encode_cell({ r, c });
           const cell = (ws as any)[addr];
           if (!cell) continue;
+
+          // Determine if this day is disabled
+          const di = c - 1; // column index to day index (0-4)
+          const day = addDays(rowWeekStart, di);
+          const isDisabled = isDisabledDay(day, p);
+
+          // Get color based on slot start time
+          const color = getSlotColor(slot.start, isDisabled);
+
           const existing = cell.s ?? {};
           cell.s = {
             ...existing,
@@ -573,9 +634,15 @@ export async function exportPlannerWord(args: {
             const day = addDays(weekStart, di);
 
             if (isDisabledDay(day, p)) {
+              const color = getSlotColor(slot.start, true);
               rowCells.push(
                 new TableCell({
                   children: [new Paragraph({ text: "" })],
+                  shading: {
+                    type: ShadingType.SOLID,
+                    color: color,
+                    fill: color,
+                  },
                 })
               );
               continue;
@@ -605,9 +672,17 @@ export async function exportPlannerWord(args: {
               cellParas.push(new Paragraph({ text: "" }));
             }
 
+            // Get color based on slot start time
+            const color = getSlotColor(slot.start, false);
+
             rowCells.push(
               new TableCell({
                 children: cellParas,
+                shading: {
+                  type: ShadingType.SOLID,
+                  color: color,
+                  fill: color,
+                },
               })
             );
           }

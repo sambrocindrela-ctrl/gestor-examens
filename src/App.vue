@@ -319,125 +319,137 @@ function handleImportRoomsCSV(ev: Event) {
 </script>
 
 <template>
-  <div class="p-6 max-w-[1200px] mx-auto font-sans text-gray-900">
-    <h1 class="text-2xl font-bold mb-2">
-      Planificador d'exàmens — períodes amb curs/quadrimestre
-    </h1>
-    <p class="text-sm mb-6">
-      CSV esperat (assignatures/períodes):
-      <code class="bg-gray-100 px-1 rounded">
-        codi,sigles,nivell,curs,quadrimestre,period_id,period_tipus,period_inici,period_fi,period_slots,period_blackouts
-      </code>
-      . Opcional: <code class="bg-gray-100 px-1 rounded">MET,MATT,MEE,MCYBERS</code>.
-    </p>
+  <div class="flex flex-col h-screen font-sans text-gray-900">
+    <!-- Header Section (Fixed) -->
+    <div class="flex-shrink-0 p-6 border-b bg-white">
+      <h1 class="text-2xl font-bold mb-2">
+        Planificador d'exàmens — períodes amb curs/quadrimestre
+      </h1>
+      <p class="text-sm mb-6">
+        CSV esperat (assignatures/períodes):
+        <code class="bg-gray-100 px-1 rounded">
+          codi,sigles,nivell,curs,quadrimestre,period_id,period_tipus,period_inici,period_fi,period_slots,period_blackouts
+        </code>
+        . Opcional: <code class="bg-gray-100 px-1 rounded">MET,MATT,MEE,MCYBERS</code>.
+      </p>
 
-    <PlannerToolbar
-      :availableSubjects="availableSubjects"
-      :subjects="subjects"
-      :lastDeleted="lastDeleted"
-      :periods="periods"
-      :activePid="activePid"
-      @undo-delete="undoDelete"
-      @set-last-deleted="(val) => (lastDeleted = val)"
-      @set-active-pid="(id) => (activePid = id)"
-      @add-period="addPeriod"
-      @remove-period="removePeriod"
-      @import-csv="handleImportCSV"
-      @merge-subjects-csv="handleMergeSubjectsCSV"
-      @import-rooms-csv="handleImportRoomsCSV"
-      @export-csv="handleExportCSV"
-      @export-txt="handleExportTXT"
-      @export-excel="handleExportExcel"
-      @export-word="handleExportWord"
-      @export-json="handleExportJSON"
-      @import-json="importJSON"
-      @save-state="saveStateToUrl"
-      @load-state="loadStateFromUrl"
-      @copy-link="copyLinkToClipboard"
-    />
+      <PlannerToolbar
+        :availableSubjects="availableSubjects"
+        :subjects="subjects"
+        :lastDeleted="lastDeleted"
+        :periods="periods"
+        :activePid="activePid"
+        @undo-delete="undoDelete"
+        @set-last-deleted="(val) => (lastDeleted = val)"
+        @set-active-pid="(id) => (activePid = id)"
+        @add-period="addPeriod"
+        @remove-period="removePeriod"
+        @import-csv="handleImportCSV"
+        @merge-subjects-csv="handleMergeSubjectsCSV"
+        @import-rooms-csv="handleImportRoomsCSV"
+        @export-csv="handleExportCSV"
+        @export-txt="handleExportTXT"
+        @export-excel="handleExportExcel"
+        @export-word="handleExportWord"
+        @export-json="handleExportJSON"
+        @import-json="importJSON"
+        @save-state="saveStateToUrl"
+        @load-state="loadStateFromUrl"
+        @copy-link="copyLinkToClipboard"
+      />
 
-    <!-- Configuració del període actiu (resum) -->
-    <div v-if="activePeriod" class="grid md:grid-cols-3 gap-4 mb-6">
-      <div class="p-4 rounded-2xl border shadow-sm bg-white">
-        <h2 class="font-semibold mb-3">Configuració del període</h2>
+      <!-- Configuració del període actiu (resum) -->
+      <div v-if="activePeriod" class="grid md:grid-cols-3 gap-4 mt-6">
+        <div class="p-4 rounded-2xl border shadow-sm bg-white">
+          <h2 class="font-semibold mb-3">Configuració del període</h2>
 
-        <label class="block text-sm mb-1">Tipus</label>
-        <select
-          v-model="activePeriod.tipus"
-          class="w-full border rounded-xl p-2 bg-white"
-        >
-          <option>PARCIAL</option>
-          <option>FINAL</option>
-          <option>REAVALUACIÓ</option>
-        </select>
-
-        <label class="block text-sm mt-3 mb-1">Curs (any d’inici)</label>
-        <input
-          type="number"
-          placeholder="Ex. 2025"
-          v-model.number="activePeriod.curs"
-          class="w-full border rounded-xl p-2"
-        />
-
-        <label class="block text-sm mt-3 mb-1">Quadrimestre del període</label>
-        <select
-          v-model.number="activePeriod.quad"
-          class="w-full border rounded-xl p-2 bg-white"
-        >
-          <option :value="undefined">(Sense)</option>
-          <option :value="1">1</option>
-          <option :value="2">2</option>
-        </select>
-      </div>
-
-      <!-- Franges horàries -->
-      <div class="p-4 rounded-2xl border shadow-sm bg-white md:col-span-2">
-        <h2 class="font-semibold mb-3">
-          Franges horàries (per a aquest període)
-        </h2>
-        <div class="space-y-2">
-          <div
-            v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
-            :key="i"
-            class="flex items-center gap-2"
+          <label class="block text-sm mb-1">Tipus</label>
+          <select
+            v-model="activePeriod.tipus"
+            class="w-full border rounded-xl p-2 bg-white"
           >
-            <span class="text-sm w-6">{{ i + 1 }}.</span>
-            <input
-              v-model="s.start"
-              class="border rounded-xl p-2 w-28"
-              placeholder="HH:mm"
-            />
-            <span>–</span>
-            <input
-              v-model="s.end"
-              class="border rounded-xl p-2 w-28"
-              placeholder="HH:mm"
-            />
+            <option>PARCIAL</option>
+            <option>FINAL</option>
+            <option>REAVALUCIÓ</option>
+          </select>
+
+          <label class="block text-sm mt-3 mb-1">Curs (any d'inici)</label>
+          <input
+            type="number"
+            placeholder="Ex. 2025"
+            v-model.number="activePeriod.curs"
+            class="w-full border rounded-xl p-2"
+          />
+
+          <label class="block text-sm mt-3 mb-1">Quadrimestre del període</label>
+          <select
+            v-model.number="activePeriod.quad"
+            class="w-full border rounded-xl p-2 bg-white"
+          >
+            <option :value="undefined">(Sense)</option>
+            <option :value="1">1</option>
+            <option :value="2">2</option>
+          </select>
+        </div>
+
+        <!-- Franges horàries -->
+        <div class="p-4 rounded-2xl border shadow-sm bg-white md:col-span-2">
+          <h2 class="font-semibold mb-3">
+            Franges horàries (per a aquest període)
+          </h2>
+          <div class="space-y-2">
+            <div
+              v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
+              :key="i"
+              class="flex items-center gap-2"
+            >
+              <span class="text-sm w-6">{{ i + 1 }}.</span>
+              <input
+                v-model="s.start"
+                class="border rounded-xl p-2 w-28"
+                placeholder="HH:mm"
+              />
+              <span>–</span>
+              <input
+                v-model="s.end"
+                class="border rounded-xl p-2 w-28"
+                placeholder="HH:mm"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Safata + Calendari -->
-    <SubjectsTray
-      :availableSubjects="availableSubjects"
-      :subjects="subjects"
-      :hiddenSubjectIds="hiddenSubjectIds"
-      @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)"
-    />
+    <!-- Two-Column Layout with Independent Scrolling -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Left Column: Subjects Tray -->
+      <div class="w-1/3 border-r bg-gray-50 overflow-y-auto p-6">
+        <SubjectsTray
+          :availableSubjects="availableSubjects"
+          :subjects="subjects"
+          :hiddenSubjectIds="hiddenSubjectIds"
+          @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)"
+        />
+      </div>
 
-    <ExamCalendarGrid
-      v-if="activePeriod"
-      :activePeriod="activePeriod"
-      :activePid="activePid"
-      :slotsPerPeriod="slotsPerPeriod"
-      :assignedPerPeriod="assignedPerPeriod"
-      :subjects="subjects"
-      :roomsData="roomsData"
-      @remove-one-from-cell="handleRemoveOneFromCell"
-      @update-cell-list="handleUpdateCellList"
-    />
+      <!-- Right Column: Calendar -->
+      <div class="flex-1 overflow-y-auto p-6 bg-white">
+        <ExamCalendarGrid
+          v-if="activePeriod"
+          :activePeriod="activePeriod"
+          :activePid="activePid"
+          :slotsPerPeriod="slotsPerPeriod"
+          :assignedPerPeriod="assignedPerPeriod"
+          :subjects="subjects"
+          :roomsData="roomsData"
+          @remove-one-from-cell="handleRemoveOneFromCell"
+          @update-cell-list="handleUpdateCellList"
+        />
+      </div>
+    </div>
 
+    <!-- Trash Bin (Fixed at bottom-right) -->
     <TrashBin @delete="deleteSubjectPermanently" />
   </div>
 </template>
