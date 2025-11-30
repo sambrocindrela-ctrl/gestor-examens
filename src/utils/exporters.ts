@@ -504,6 +504,7 @@ export function exportPlannerExcel(args: {
     const wbout = XLSX.write(wb, {
       bookType: "xlsx",
       type: "array",
+      cellStyles: true,
     });
     const blob = new Blob([wbout], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
