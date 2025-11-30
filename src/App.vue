@@ -358,67 +358,34 @@ function handleImportRoomsCSV(ev: Event) {
         @copy-link="copyLinkToClipboard"
       />
 
-      <!-- Configuració del període actiu (resum) -->
-      <div v-if="activePeriod" class="grid md:grid-cols-3 gap-4 mt-6">
-        <div class="p-4 rounded-2xl border shadow-sm bg-white">
-          <h2 class="font-semibold mb-3">Configuració del període</h2>
 
-          <label class="block text-sm mb-1">Tipus</label>
-          <select
-            v-model="activePeriod.tipus"
-            class="w-full border rounded-xl p-2 bg-white"
-          >
-            <option>PARCIAL</option>
-            <option>FINAL</option>
-            <option>REAVALUCIÓ</option>
-          </select>
+      <!-- Configuració del període actiu (informació compacta) -->
+      <div v-if="activePeriod" class="p-4 rounded-2xl border shadow-sm bg-white mt-6">
+        <div class="flex flex-wrap items-center gap-6 text-sm">
+          <!-- Period info -->
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-gray-700">Període:</span>
+            <span class="px-3 py-1 bg-blue-50 rounded-full font-medium">
+              {{ activePeriod.tipus }} {{ activePeriod.curs || '—' }}-{{ activePeriod.quad || '—' }}
+            </span>
+          </div>
 
-          <label class="block text-sm mt-3 mb-1">Curs (any d'inici)</label>
-          <input
-            type="number"
-            placeholder="Ex. 2025"
-            v-model.number="activePeriod.curs"
-            class="w-full border rounded-xl p-2"
-          />
-
-          <label class="block text-sm mt-3 mb-1">Quadrimestre del període</label>
-          <select
-            v-model.number="activePeriod.quad"
-            class="w-full border rounded-xl p-2 bg-white"
-          >
-            <option :value="undefined">(Sense)</option>
-            <option :value="1">1</option>
-            <option :value="2">2</option>
-          </select>
-        </div>
-
-        <!-- Franges horàries -->
-        <div class="p-4 rounded-2xl border shadow-sm bg-white md:col-span-2">
-          <h2 class="font-semibold mb-3">
-            Franges horàries (per a aquest període)
-          </h2>
-          <div class="space-y-2">
-            <div
-              v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
-              :key="i"
-              class="flex items-center gap-2"
-            >
-              <span class="text-sm w-6">{{ i + 1 }}.</span>
-              <input
-                v-model="s.start"
-                class="border rounded-xl p-2 w-28"
-                placeholder="HH:mm"
-              />
-              <span>–</span>
-              <input
-                v-model="s.end"
-                class="border rounded-xl p-2 w-28"
-                placeholder="HH:mm"
-              />
+          <!-- Time slots info -->
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-gray-700">Franges horàries:</span>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
+                :key="i"
+                class="px-2 py-1 bg-gray-100 rounded text-xs font-mono"
+              >
+                {{ s.start }}–{{ s.end }}
+              </span>
             </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- Two-Column Layout with Independent Scrolling -->
