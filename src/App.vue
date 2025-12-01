@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import * as Papa from "papaparse";
 
 import { useExamPlannerState } from "./composables/useExamPlannerState";
@@ -41,6 +41,37 @@ const {
   loadStateFromUrl,
   copyLinkToClipboard,
 } = useExamPlannerState();
+
+/* --- Admin Mode / Password Protection --- */
+
+const ADMIN_PASSWORD = "admin2025";
+const isAdminMode = ref(false);
+
+// Load admin status from sessionStorage on mount
+onMounted(() => {
+  const savedAdminStatus = sessionStorage.getItem("isAdminMode");
+  if (savedAdminStatus === "true") {
+    isAdminMode.value = true;
+  }
+});
+
+function toggleAdminMode(password?: string) {
+  if (!isAdminMode.value) {
+    // Trying to unlock
+    if (password === ADMIN_PASSWORD) {
+      isAdminMode.value = true;
+      sessionStorage.setItem("isAdminMode", "true");
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // Locking
+    isAdminMode.value = false;
+    sessionStorage.removeItem("isAdminMode");
+    return true;
+  }
+}
 
 /* --- Computed Logic --- */
 
@@ -339,6 +370,7 @@ function handleImportRoomsCSV(ev: Event) {
         :lastDeleted="lastDeleted"
         :periods="periods"
         :activePid="activePid"
+        :isAdminMode="isAdminMode"
         @undo-delete="undoDelete"
         @set-last-deleted="(val) => (lastDeleted = val)"
         @set-active-pid="(id) => (activePid = id)"
@@ -356,6 +388,7 @@ function handleImportRoomsCSV(ev: Event) {
         @save-state="saveStateToUrl"
         @load-state="loadStateFromUrl"
         @copy-link="copyLinkToClipboard"
+        @toggle-admin-mode="toggleAdminMode"
       />
 
 
