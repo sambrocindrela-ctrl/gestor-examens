@@ -80,19 +80,6 @@ function getTipusLabel(tipus: string) {
       </label>
 
       <button @click="emit('export-csv')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-        Exportar CSV
-      </button>
-      <button @click="emit('export-txt')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-        Exportar TXT
-      </button>
-      <button @click="emit('export-excel')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-        Exportar Excel
-      </button>
-      <button @click="emit('export-word')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-        Exportar calendari en Word
-      </button>
-      <button @click="emit('export-json')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-        Exportar JSON
       </button>
 
       <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer bg-white hover:bg-gray-50">
