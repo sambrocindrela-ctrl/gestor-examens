@@ -188,24 +188,6 @@ function cancelPassword() {
           >
             Exportar TXT
           </button>
-          
-          <button 
-            @click="emit('export-excel')" 
-            :disabled="!isAdminMode"
-            class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-            :class="isAdminMode ? 'hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-          >
-            Exportar Excel
-          </button>
-          
-          <button 
-            @click="emit('export-word')" 
-            :disabled="!isAdminMode"
-            class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-            :class="isAdminMode ? 'hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-          >
-            Exportar calendari en Word
-          </button>
         </div>
       </div>
 
@@ -229,6 +211,14 @@ function cancelPassword() {
               @change="(e) => emit('import-json', e)"
             />
           </label>
+
+          <button @click="emit('export-excel')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Exportar calendari en Excel
+          </button>
+
+          <button @click="emit('export-word')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Exportar calendari en Word
+          </button>
 
           <button @click="emit('save-state')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
             Guardar estat a l'URL
