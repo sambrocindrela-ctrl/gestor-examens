@@ -1,5 +1,5 @@
 // src/utils/exporters.ts
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import {
   Document,
   Packer,
