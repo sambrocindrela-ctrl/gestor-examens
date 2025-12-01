@@ -73,19 +73,6 @@ function getTipusLabel(tipus: string) {
         Importar Aules/Matriculats (CSV)
         <input
           type="file"
-          accept=".csv,text/csv"
-          class="hidden"
-          @change="(e) => emit('import-rooms-csv', e)"
-        />
-      </label>
-
-      <button @click="emit('export-csv')" class="px-3 py-2 border rounded-xl shadow-sm hover:bg-gray-50">
-      </button>
-
-      <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer bg-white hover:bg-gray-50">
-        Importar JSON
-        <input
-          type="file"
           accept="application/json"
           class="hidden"
           @change="(e) => emit('import-json', e)"
