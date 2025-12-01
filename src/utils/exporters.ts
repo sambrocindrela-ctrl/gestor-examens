@@ -446,7 +446,7 @@ export function exportPlannerExcel(args: {
       const cols: any[] = [{ wch: 20 }];
       for (let i = 0; i < 5; i++) cols.push({ wch: 40 });
       (ws as any)["!cols"] = cols;
-      (ws as any)["!rows"] = rows.map(() => ({ hpt: 36 }));
+
 
       for (let r = 0; r <= range.e.r; r++) {
         if (slotIndexPerRow[r] !== -1) continue;
