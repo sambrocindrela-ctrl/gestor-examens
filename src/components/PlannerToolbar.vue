@@ -71,14 +71,21 @@ function attemptUnlock() {
 }
 
 function submitPassword() {
-  const success = emit('toggle-admin-mode', passwordInput.value);
-  if (success) {
-    showPasswordDialog.value = false;
-    passwordInput.value = "";
-    passwordError.value = false;
-  } else {
-    passwordError.value = true;
-  }
+  const wasLocked = !props.isAdminMode;
+  emit('toggle-admin-mode', passwordInput.value);
+  
+  // Use nextTick to check if unlock was successful after the parent updates
+  setTimeout(() => {
+    if (wasLocked && props.isAdminMode) {
+      // Successfully unlocked
+      showPasswordDialog.value = false;
+      passwordInput.value = "";
+      passwordError.value = false;
+    } else if (wasLocked && !props.isAdminMode) {
+      // Failed to unlock (wrong password)
+      passwordError.value = true;
+    }
+  }, 50);
 }
 
 function lockAdmin() {
