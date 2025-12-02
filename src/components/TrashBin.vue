@@ -11,7 +11,8 @@ const emit = defineEmits<{
 
 function onAdd(evt: any) {
   // When something is dropped here, we emit the delete event
-  const item = evt.item.__draggable_context?.element || evt.item._underlying_vm_;
+  // The item is added to trashList by v-model, so we can take it from there
+  const item = trashList.value[0];
   if (item && item.id) {
     emit('delete', item.id);
   }
