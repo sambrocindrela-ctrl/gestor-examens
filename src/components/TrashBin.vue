@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
+import type { Subject } from '../types/examPlanner';
 
 // We use a dummy list to act as a drop target
-const trashList = ref([]);
+const trashList = ref<Subject[]>([]);
 
 const emit = defineEmits<{
   (e: 'delete', item: any): void
 }>();
 
-function onAdd(evt: any) {
+function onAdd() {
   // When something is dropped here, we emit the delete event
   // The item is added to trashList by v-model, so we can take it from there
   const item = trashList.value[0];
