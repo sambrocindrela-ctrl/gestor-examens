@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { Subject, Period } from "../types/examPlanner";
+import { importExcelCalendar, type ImportedCalendarData } from "../utils/importExcelCalendar";
 
 const props = defineProps<{
   availableSubjects: Subject[];
@@ -23,6 +24,7 @@ const emit = defineEmits<{
   (e: 'merge-subjects-csv', event: Event): void;
   (e: 'import-rooms-csv', event: Event): void;
   (e: 'import-json', event: Event): void;
+  (e: 'import-calendar-data', data: ImportedCalendarData): void;
   
   (e: 'export-csv'): void;
   (e: 'export-txt'): void;
@@ -97,6 +99,25 @@ function cancelPassword() {
   passwordInput.value = "";
   passwordError.value = false;
 }
+
+function handleImportExcel(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  importExcelCalendar(file, props.subjects)
+    .then((data) => {
+      emit('import-calendar-data', data);
+      alert("Calendari llegit correctament. Actualitzant...");
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Error important el calendari Excel: " + err);
+    })
+    .finally(() => {
+      input.value = "";
+    });
+}
 </script>
 
 <template>
@@ -168,6 +189,20 @@ function cancelPassword() {
               class="hidden"
               :disabled="!isAdminMode"
               @change="(e) => emit('import-rooms-csv', e)"
+            />
+          </label>
+
+          <label 
+            class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+            :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
+          >
+            Importar calendari en Excel
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              class="hidden"
+              :disabled="!isAdminMode"
+              @change="handleImportExcel"
             />
           </label>
 
