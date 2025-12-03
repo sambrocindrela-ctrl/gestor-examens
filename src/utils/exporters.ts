@@ -555,6 +555,17 @@ export function exportPlannerExcel(args: {
         const rowWeekStart = weekStartPerRow[r];
         if (!rowWeekStart) continue;
 
+        // Determine borders based on slot block
+        const isStartOfSlot = r === 0 || slotIndexPerRow[r - 1] !== si;
+        const isEndOfSlot = r === range.e.r || slotIndexPerRow[r + 1] !== si;
+
+        const borderStyle = {
+          top: isStartOfSlot ? { style: "thin", color: { rgb: "000000" } } : undefined,
+          bottom: isEndOfSlot ? { style: "thin", color: { rgb: "000000" } } : undefined,
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        };
+
         for (let c = 1; c <= 5; c++) {
           const addr = XLSX.utils.encode_cell({ r, c });
           const cell = (ws as any)[addr];
@@ -585,12 +596,7 @@ export function exportPlannerExcel(args: {
               ...(existing.alignment || {}),
             },
             fill: { fgColor: { rgb: color } },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } },
-            }
+            border: borderStyle
           };
         }
 
@@ -602,12 +608,7 @@ export function exportPlannerExcel(args: {
           cell0.s = {
             ...existing,
             alignment: { vertical: "center", horizontal: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } },
-            }
+            border: borderStyle
           };
         }
       }
