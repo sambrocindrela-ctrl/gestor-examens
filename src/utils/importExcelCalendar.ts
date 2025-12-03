@@ -54,7 +54,10 @@ export async function importExcelCalendar(
 
                 // Regex for metadata row: "Period: [Tipus], Curs: [Curs], Q: [Quad]"
                 // Allowing flexibility in separators and casing
+                // Regex for metadata row: "Period: [Tipus], Curs: [Curs], Q: [Quad]"
                 const metadataRegex = /Period(?:e)?\s*[:\s]\s*(.*?)[,;]\s*Curs\s*[:\s]\s*(.*?)[,;]\s*Q(?:uad(?:rimestre)?)?\s*[:\s]\s*(\d+)/i;
+                // Regex for simple format: "PARCIALS-2025-1" or "FINALS 2025 2"
+                const simpleMetadataRegex = /(PARCIAL(?:S)?|FINAL(?:S)?|REAVALUACIÓ(?:NS)?)[-\s]+(\d{4})[-\s]+(\d)/i;
 
                 for (let r = 0; r < rows.length; r++) {
                     const row = rows[r];
@@ -64,18 +67,34 @@ export async function importExcelCalendar(
                     const rowString = row.join(" ");
 
                     // 1. Check for Metadata Row (New Period)
-                    const metaMatch = rowString.match(metadataRegex);
-                    if (metaMatch) {
-                        const tipus = metaMatch[1].trim() as any; // Cast to any or TipusPeriode if imported
-                        const curs = parseInt(metaMatch[2].trim(), 10); // Parse as number
-                        const quad = parseInt(metaMatch[3].trim(), 10) as 1 | 2;
+                    let tipus: any = null;
+                    let curs: number | null = null;
+                    let quad: 1 | 2 | null = null;
 
+                    const metaMatch = rowString.match(metadataRegex);
+                    const simpleMatch = rowString.match(simpleMetadataRegex);
+
+                    if (metaMatch) {
+                        tipus = metaMatch[1].trim();
+                        curs = parseInt(metaMatch[2].trim(), 10);
+                        quad = parseInt(metaMatch[3].trim(), 10) as 1 | 2;
+                    } else if (simpleMatch) {
+                        let rawType = simpleMatch[1].toUpperCase();
+                        if (rawType.startsWith("PARCIAL")) tipus = "PARCIAL";
+                        else if (rawType.startsWith("FINAL")) tipus = "FINAL";
+                        else if (rawType.startsWith("REAVALUACIÓ")) tipus = "REAVALUACIÓ";
+
+                        curs = parseInt(simpleMatch[2], 10);
+                        quad = parseInt(simpleMatch[3], 10) as 1 | 2;
+                    }
+
+                    if (tipus && curs && quad) {
                         // Create new period
                         const newPeriod: Period = {
                             id: periodCounter++,
-                            label: `Period ${periodCounter - 1}`, // Placeholder label, user can edit
+                            label: `Period ${periodCounter - 1}`,
                             tipus: tipus,
-                            curs: isNaN(curs) ? 2025 : curs, // Fallback or handle error
+                            curs: isNaN(curs) ? 2025 : curs,
                             quad: quad,
                             startStr: "", // Will be set when we find dates
                             endStr: "",
