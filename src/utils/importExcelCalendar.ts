@@ -123,9 +123,13 @@ export async function importExcelCalendar(
                                 // Excel date serial
                                 date = new Date(Math.round((cellVal - 25569) * 86400 * 1000));
                             } else {
-                                const parts = cellVal.trim().split("/");
+                                const valStr = cellVal.trim();
+                                // Try dd/MM/yyyy, dd-MM-yyyy, dd.MM.yyyy
+                                // Replace . and - with / for easier parsing
+                                const normalized = valStr.replace(/[.-]/g, "/");
+                                const parts = normalized.split("/");
                                 if (parts.length === 3) {
-                                    date = parse(cellVal.trim(), "dd/MM/yyyy", new Date());
+                                    date = parse(normalized, "dd/MM/yyyy", new Date());
                                 }
                             }
 
@@ -160,7 +164,8 @@ export async function importExcelCalendar(
 
                     // 3. Check for Time Slot Row
                     // Regex for "HH:mm" or "HH:mm-HH:mm" or "HH:mm\nHH:mm"
-                    const timeMatch = firstCell.match(/(\d{1,2}:\d{2})[\s\-\n]+(\d{1,2}:\d{2})/);
+                    // Allow dot or colon for time separator. Allow various separators between start/end.
+                    const timeMatch = firstCell.match(/(\d{1,2}[:.]\d{2})(?:[\s\-\n\r]+|(?:\s*-\s*))(\d{1,2}[:.]\d{2})/);
                     if (timeMatch && currentPeriod) {
                         const start = timeMatch[1];
                         const end = timeMatch[2];
