@@ -14,6 +14,7 @@ import {
   exportPlannerWord,
 } from "./utils/exporters";
 
+import type { ImportedCalendarData } from "./utils/importExcelCalendar";
 import type { Subject, AssignedMap } from "./types/examPlanner";
 
 import PlannerToolbar from "./components/PlannerToolbar.vue";
@@ -347,6 +348,17 @@ function handleImportRoomsCSV(ev: Event) {
     },
   });
 }
+
+function handleImportExcelCalendar(data: ImportedCalendarData) {
+  periods.value = data.periods;
+  slotsPerPeriod.value = data.slotsPerPeriod;
+  assignedPerPeriod.value = data.assignedPerPeriod;
+  roomsData.value = data.roomsData;
+
+  if (data.periods.length > 0) {
+    activePid.value = data.periods[0].id;
+  }
+}
 </script>
 
 <template>
@@ -379,6 +391,7 @@ function handleImportRoomsCSV(ev: Event) {
         @import-csv="handleImportCSV"
         @merge-subjects-csv="handleMergeSubjectsCSV"
         @import-rooms-csv="handleImportRoomsCSV"
+        @import-calendar-data="handleImportExcelCalendar"
         @export-csv="handleExportCSV"
         @export-txt="handleExportTXT"
         @export-excel="handleExportExcel"
