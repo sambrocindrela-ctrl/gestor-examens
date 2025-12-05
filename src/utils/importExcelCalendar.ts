@@ -73,6 +73,47 @@ export async function importExcelCalendar(
                 };
 
                 // Helper to parse cell content for multiple subjects
+                const parseCellSubjects = (cellContent: string) => {
+                    const lines = cellContent.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                    let currentNameBuffer: string[] = [];
+                    const found: { code: string, name: string }[] = [];
+
+                    // Regex to identify garbage lines (Rooms, Students)
+                    const garbageRegex = /^(?:Aula|Aules|Classroom|Laboratory|Laboratori|Students|Matriculats|Estudiants)\b/i;
+
+                    for (const line of lines) {
+                        const codeMatch = line.match(/230\d{3,4}/);
+                        if (codeMatch) {
+                            // Found a code line!
+                            const code = codeMatch[0];
+
+                            // Remove the code from the line to see if there is name text remaining
+                            const lineWithoutCode = line.replace(code, "").trim();
+
+                            // If there is remaining text (and it's not garbage), it's part of the name
+                            if (lineWithoutCode && !garbageRegex.test(lineWithoutCode)) {
+                                currentNameBuffer.push(lineWithoutCode);
+                            }
+
+                            // The lines we buffered so far are the Name.
+                            let name = currentNameBuffer.join(" ");
+
+                            found.push({ code, name });
+
+                            // Reset buffer for the next subject in the same cell
+                            currentNameBuffer = [];
+                        } else {
+                            // No code in this line. Check for garbage.
+                            if (garbageRegex.test(line)) {
+                                // Ignore room/student info
+                            } else {
+                                // Likely part of a name.
+                                currentNameBuffer.push(line);
+                            }
+                        }
+                    }
+                    return found;
+                };
 
                 const metadataRegex = /Period(?:e)?\s*[:\s]\s*(.*?)[,;]\s*Curs\s*[:\s]\s*(.*?)[,;]\s*Q(?:uad(?:rimestre)?)?\s*[:\s]\s*(\d+)/i;
                 const simpleMetadataRegex = /(PARCIAL(?:S)?|FINAL(?:S)?|REAVALUACIÓ(?:NS)?)[-\s]+(\d{4})[-\s]+(\d)/i;
