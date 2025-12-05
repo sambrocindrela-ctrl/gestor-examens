@@ -172,6 +172,32 @@ function handleImportExcel(event: Event) {
             <input
               type="file"
               accept=".csv,text/csv"
+              class="hidden"
+              :disabled="!isAdminMode"
+              @change="(e) => emit('merge-subjects-csv', e)"
+            />
+          </label>
+
+          <label 
+            class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+            :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
+          >
+            Importar Aules/Matriculats (CSV)
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              class="hidden"
+              :disabled="!isAdminMode"
+              @change="(e) => emit('import-rooms-csv', e)"
+            />
+          </label>
+
+          <label 
+            class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+            :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
+          >
+            Importar calendari en Excel
+            <!-- Fixed TS1117 error -->
             <input
               type="file"
               accept=".xlsx, .xls"
