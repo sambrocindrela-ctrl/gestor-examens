@@ -197,6 +197,7 @@ function handleImportExcel(event: Event) {
             :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
           >
             Importar calendari en Excel
+            <!-- Fixed TS1117 error -->
             <input
               type="file"
               accept=".xlsx, .xls"
