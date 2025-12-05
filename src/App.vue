@@ -46,7 +46,7 @@ const {
 /* --- Admin Mode / Password Protection --- */
 
 const ADMIN_PASSWORD = "admin2025";
-const isAdminMode = ref(false);
+const isAdminMode = ref(true);
 
 // Load admin status from sessionStorage on mount
 onMounted(() => {
