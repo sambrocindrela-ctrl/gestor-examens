@@ -5,7 +5,6 @@ import type {
     SlotsPerPeriod,
     AssignedPerPeriod,
     RoomsDataPerPeriod,
-    TimeSlot,
     Subject,
 } from "../types/examPlanner";
 
