@@ -10,6 +10,7 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
+  ShadingType,
 } from "docx";
 import {
   format,
@@ -228,6 +229,50 @@ function formatSubjectForCell(s: Subject, extra?: RoomsEnroll): string {
   return lines.join("\n");
 }
 
+/**
+ * Determine cell background color based on slot start time
+ * Returns RGB hex color without the # prefix
+ */
+function getSlotColor(slotStart: string, isDisabled: boolean = false): string {
+  if (isDisabled) {
+    // Colour for days with no exam: #D9D9D9
+    return "D9D9D9";
+  }
+
+  // Parse time (format: "HH:mm")
+  const [hoursStr, minutesStr] = slotStart.split(":");
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  const totalMinutes = hours * 60 + minutes;
+
+  // Time thresholds in minutes
+  const time11_00 = 11 * 60; // 11:00
+  const time10_50 = 10 * 60 + 50; // 10:50
+  const time14_00 = 14 * 60; // 14:00
+  const time13_59 = 13 * 60 + 59; // 13:59
+  const time17_00 = 17 * 60; // 17:00
+
+  // First slot in the morning (beginning before 11:00 h): #FFFFCC
+  if (totalMinutes < time11_00) {
+    return "FFFFCC";
+  }
+  // Second slot in the morning (beginning after 10:50 h and before 14:00 h): #FFFF99
+  else if (totalMinutes > time10_50 && totalMinutes < time14_00) {
+    return "FFFF99";
+  }
+  // First slot in the afternoon (beginning after 13:59 h and before 17:00 h): #DBE4F0
+  else if (totalMinutes > time13_59 && totalMinutes < time17_00) {
+    return "DBE4F0";
+  }
+  // Second slot in the afternoon (beginning at 17:00 h or later): #B9CDE5
+  else if (totalMinutes >= time17_00) {
+    return "B9CDE5";
+  }
+
+  // Default fallback (shouldn't happen with normal schedules)
+  return "FFFFFF";
+}
+
 function buildSubjectParagraphsForWord(
   s: Subject,
   extra?: RoomsEnroll
@@ -329,7 +374,6 @@ export function exportPlannerExcel(args: {
   try {
     const wb = XLSX.utils.book_new();
 
-    const slotColors = ["E3F2FD", "E8F5E9", "FFF3E0", "F3E5F5", "E0F7FA", "FBE9E7"];
     const dayLabelsCat = ["Dl", "Dt", "Dc", "Dj", "Dv"];
     const dayLabelsEn = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
@@ -341,6 +385,7 @@ export function exportPlannerExcel(args: {
       const roomsForPeriod = roomsData[p.id] ?? {};
       const rows: any[][] = [];
       const slotIndexPerRow: number[] = [];
+      const weekStartPerRow: (Date | null)[] = [];
 
       const start = mondayOfWeek(parseISO(p.startStr));
       const end = fridayOfWeek(parseISO(p.endStr));
@@ -350,6 +395,7 @@ export function exportPlannerExcel(args: {
         if (rows.length > 0) {
           rows.push([]);
           slotIndexPerRow.push(-1);
+          weekStartPerRow.push(null);
         }
 
         const headerWeek: any[] = ["Franja horària / Time slot"];
@@ -361,14 +407,22 @@ export function exportPlannerExcel(args: {
         }
         rows.push(headerWeek);
         slotIndexPerRow.push(-1);
+        weekStartPerRow.push(null);
+
+        // Track merges: { s: {r, c}, e: {r, c} }
+        const merges: any[] = [];
+        // We need to know the current row index in 'rows' to calculate absolute merge ranges
+        // header is at rows.length - 1. First data row will be at rows.length.
 
         slots.forEach((slot, si) => {
-          const row: any[] = [`${slot.start}-${slot.end}`];
+          // 1. Calculate max subjects for this slot across the 5 days
+          let maxSubjects = 1;
+          const subjectsByDay: Subject[][] = [];
 
           for (let di = 0; di < 5; di++) {
             const day = addDays(weekStart, di);
             if (isDisabledDay(day, p)) {
-              row.push("");
+              subjectsByDay.push([]);
               continue;
             }
             const dateIso = format(day, "yyyy-MM-dd");
@@ -377,22 +431,94 @@ export function exportPlannerExcel(args: {
             const list = ids
               .map((id) => subjects.find((s) => s.id === id))
               .filter(Boolean) as Subject[];
-
-            const roomsMap: RoomsMapPerCell = roomsForPeriod[key] ?? {};
-            const cellText = list
-              .map((s) => formatSubjectForCell(s, roomsMap[s.id]))
-              .join("\n\n");
-            row.push(cellText);
+            subjectsByDay.push(list);
+            if (list.length > maxSubjects) {
+              maxSubjects = list.length;
+            }
           }
 
-          rows.push(row);
-          slotIndexPerRow.push(si);
+          const startRowIdx = rows.length;
+
+          // 2. Generate rows
+          for (let r = 0; r < maxSubjects; r++) {
+            const row: any[] = [];
+
+            // Time slot column
+            if (r === 0) {
+              row.push(`${slot.start}-${slot.end}`);
+            } else {
+              row.push(""); // Empty for subsequent rows (will be merged)
+            }
+
+            // Day columns
+            for (let di = 0; di < 5; di++) {
+              const list = subjectsByDay[di];
+              const s = list[r]; // Subject for this row
+
+              if (s) {
+                const day = addDays(weekStart, di);
+                const dateIso = format(day, "yyyy-MM-dd");
+                const key = `${dateIso}|${si}`;
+                const roomsMap: RoomsMapPerCell = roomsForPeriod[key] ?? {};
+                row.push(formatSubjectForCell(s, roomsMap[s.id]));
+              } else {
+                row.push("");
+              }
+            }
+
+            rows.push(row);
+            slotIndexPerRow.push(si);
+            weekStartPerRow.push(weekStart);
+          }
+
+          const endRowIdx = rows.length - 1;
+
+          // 3. Calculate Merges
+
+          // Merge Time Slot Column
+          if (maxSubjects > 1) {
+            merges.push({
+              s: { r: startRowIdx, c: 0 },
+              e: { r: endRowIdx, c: 0 },
+            });
+          }
+
+          // Merge Day Columns if needed
+          for (let di = 0; di < 5; di++) {
+            const list = subjectsByDay[di];
+            // If there is exactly 1 subject and we have multiple rows, merge them all
+            // so the subject fills the whole slot height.
+            if (list.length === 1 && maxSubjects > 1) {
+              merges.push({
+                s: { r: startRowIdx, c: di + 1 }, // +1 because col 0 is time slot
+                e: { r: endRowIdx, c: di + 1 },
+              });
+            }
+          }
         });
 
         weekStart = addDays(weekStart, 7);
+
+        // Store merges for this week block to be added to the sheet later
+        // But wait, 'ws' is created after the loop. We need to store these merges somewhere.
+        // The current structure creates 'rows' for ALL weeks then makes the sheet.
+        // So we can just push these merges to a global list if we adjust row indices,
+        // OR we can attach them to the sheet at the end.
+        // Since 'rows' grows, 'startRowIdx' is correct relative to the final sheet.
+        // We just need to pass these merges out.
+        // Let's attach them to a temporary property on 'rows' or similar? 
+        // No, let's just collect them in a variable outside the loop.
+        (rows as any)._merges = (rows as any)._merges || [];
+        (rows as any)._merges.push(...merges);
       }
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
+
+      // Apply merges
+      if ((rows as any)._merges) {
+        ws["!merges"] = (rows as any)._merges;
+      }
+
       const range = XLSX.utils.decode_range(ws["!ref"] as string);
 
       const cols: any[] = [{ wch: 20 }];
@@ -419,20 +545,70 @@ export function exportPlannerExcel(args: {
       for (let r = 0; r <= range.e.r; r++) {
         const si = slotIndexPerRow[r];
         if (si < 0) continue;
-        const color = slotColors[si % slotColors.length];
+        // We need to find the slot object. 
+        // slotIndexPerRow gives us the index in the 'slots' array.
+        // But 'slots' variable is local to the loop above.
+        // We can retrieve it from slotsPerPeriod[p.id][si].
+        const slot = slotsPerPeriod[p.id]?.[si];
+        if (!slot) continue;
+
+        const rowWeekStart = weekStartPerRow[r];
+        if (!rowWeekStart) continue;
+
+        // Determine borders based on slot block
+        const isStartOfSlot = r === 0 || slotIndexPerRow[r - 1] !== si;
+        const isEndOfSlot = r === range.e.r || slotIndexPerRow[r + 1] !== si;
+
+        const borderStyle = {
+          top: isStartOfSlot ? { style: "thin", color: { rgb: "000000" } } : undefined,
+          bottom: isEndOfSlot ? { style: "thin", color: { rgb: "000000" } } : undefined,
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        };
+
         for (let c = 1; c <= 5; c++) {
           const addr = XLSX.utils.encode_cell({ r, c });
           const cell = (ws as any)[addr];
-          if (!cell) continue;
-          const existing = cell.s ?? {};
-          cell.s = {
+          // Even if cell is empty (created by aoa_to_sheet), we might want to style it
+          // if it's part of the slot block.
+          // aoa_to_sheet might not create keys for empty cells at the end of rows, 
+          // but we filled them with "".
+
+          const cellObj = cell || { t: 's', v: '' };
+          if (!cell) (ws as any)[addr] = cellObj;
+
+          // Determine if this day is disabled
+          const di = c - 1; // column index to day index (0-4)
+          const day = addDays(rowWeekStart, di);
+          const isDisabled = isDisabledDay(day, p);
+
+          // Get color based on slot start time
+          const color = getSlotColor(slot.start, isDisabled);
+
+          const existing = cellObj.s ?? {};
+          cellObj.s = {
             ...existing,
             alignment: {
-              vertical: "top",
+              vertical: "top", // Always top, unless merged? 
+              // If merged (1 subject), center vertical might be nicer, but user didn't specify.
+              // "fills the whole slot" implies visual fill. Top alignment is safer for text.
               wrapText: true,
               ...(existing.alignment || {}),
             },
             fill: { fgColor: { rgb: color } },
+            border: borderStyle
+          };
+        }
+
+        // Style the Time Slot column (col 0)
+        const addr0 = XLSX.utils.encode_cell({ r, c: 0 });
+        const cell0 = (ws as any)[addr0];
+        if (cell0) {
+          const existing = cell0.s ?? {};
+          cell0.s = {
+            ...existing,
+            alignment: { vertical: "center", horizontal: "center" },
+            border: borderStyle
           };
         }
       }
@@ -443,6 +619,7 @@ export function exportPlannerExcel(args: {
     const wbout = XLSX.write(wb, {
       bookType: "xlsx",
       type: "array",
+      cellStyles: true,
     });
     const blob = new Blob([wbout], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -573,9 +750,15 @@ export async function exportPlannerWord(args: {
             const day = addDays(weekStart, di);
 
             if (isDisabledDay(day, p)) {
+              const color = getSlotColor(slot.start, true);
               rowCells.push(
                 new TableCell({
                   children: [new Paragraph({ text: "" })],
+                  shading: {
+                    type: ShadingType.SOLID,
+                    color: color,
+                    fill: color,
+                  },
                 })
               );
               continue;
@@ -605,9 +788,17 @@ export async function exportPlannerWord(args: {
               cellParas.push(new Paragraph({ text: "" }));
             }
 
+            // Get color based on slot start time
+            const color = getSlotColor(slot.start, false);
+
             rowCells.push(
               new TableCell({
                 children: cellParas,
+                shading: {
+                  type: ShadingType.SOLID,
+                  color: color,
+                  fill: color,
+                },
               })
             );
           }
