@@ -355,6 +355,11 @@ function handleImportExcelCalendar(data: ImportedCalendarData) {
   assignedPerPeriod.value = data.assignedPerPeriod;
   roomsData.value = data.roomsData;
 
+  // Update subjects with potentially new ones created during import
+  if (data.subjects) {
+    subjects.value = data.subjects;
+  }
+
   if (data.periods.length > 0) {
     activePid.value = data.periods[0].id;
   }

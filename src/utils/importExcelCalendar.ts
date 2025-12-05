@@ -14,12 +14,14 @@ export interface ImportedCalendarData {
     slotsPerPeriod: SlotsPerPeriod;
     assignedPerPeriod: AssignedPerPeriod;
     roomsData: RoomsDataPerPeriod;
+    subjects: Subject[];
 }
 
 export async function importExcelCalendar(
     file: File,
     existingSubjects: Subject[]
 ): Promise<ImportedCalendarData> {
+    console.log("!!! IMPORT EXCEL CALENDAR - UPDATED VERSION (Step 1507) !!!");
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -30,30 +32,53 @@ export async function importExcelCalendar(
                 const sheet = workbook.Sheets[sheetName];
                 const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+                // Clone existing subjects to avoid mutating prop directly until ready
+                const allSubjects = [...existingSubjects];
+
                 const result: ImportedCalendarData = {
                     periods: [],
                     slotsPerPeriod: {},
                     assignedPerPeriod: {},
                     roomsData: {},
+                    subjects: allSubjects,
                 };
 
                 let currentPeriod: Period | null = null;
                 let currentWeekDates: Date[] = [];
                 let periodCounter = 1;
 
-                // Helper to find subject by code (e.g. 230482)
-                const findSubjectId = (text: string): string | undefined => {
-                    const match = text.match(/230\d{3}/);
-                    if (match) {
-                        const code = match[0];
-                        const sub = existingSubjects.find((s) => s.codi === code);
-                        return sub ? sub.id : undefined;
-                    }
-                    return undefined;
+                // Helper to find or create subject
+                const getOrCreateSubject = (code: string, cellContent: string): string => {
+                    const existing = allSubjects.find((s) => s.codi === code);
+                    if (existing) return existing.id;
+
+                    // Create new subject
+                    // Robust name extraction: remove code and room info from the full string
+                    // User confirmed this worked well previously
+                    let name = cellContent
+                        .replace(code, "") // Remove code
+                        .replace(/Aula\s+[\w\-\.\+]+/gi, "") // Remove "Aula ..."
+                        .replace(/Classroom\s+[\w\-\.\+]+/gi, "") // Remove "Classroom ..."
+                        .replace(/Students\s*[:\s]\s*\d+/gi, "") // Remove "Students..."
+                        .replace(/Matriculats\s*[:\s]\s*\d+/gi, "") // Remove "Matriculats..."
+                        .replace(/\r?\n/g, " ") // Replace newlines with spaces
+                        .replace(/\s+/g, " ") // Collapse multiple spaces
+                        .trim();
+
+                    if (!name) name = `Assignatura ${code}`;
+
+                    const newSub: Subject = {
+                        id: crypto.randomUUID(),
+                        codi: code,
+                        sigles: name, // Use name as sigles since nom doesn't exist
+                        curs: "1", // Default
+                        quadrimestre: 1, // Default
+                    };
+                    allSubjects.push(newSub);
+                    console.log(`[Import] Created subject: ${name} (${code})`);
+                    return newSub.id;
                 };
 
-                // Regex for metadata row: "Period: [Tipus], Curs: [Curs], Q: [Quad]"
-                // Allowing flexibility in separators and casing
                 // Regex for metadata row: "Period: [Tipus], Curs: [Curs], Q: [Quad]"
                 const metadataRegex = /Period(?:e)?\s*[:\s]\s*(.*?)[,;]\s*Curs\s*[:\s]\s*(.*?)[,;]\s*Q(?:uad(?:rimestre)?)?\s*[:\s]\s*(\d+)/i;
                 // Regex for simple format: "PARCIALS-2025-1" or "FINALS 2025 2"
@@ -78,6 +103,7 @@ export async function importExcelCalendar(
                         tipus = metaMatch[1].trim();
                         curs = parseInt(metaMatch[2].trim(), 10);
                         quad = parseInt(metaMatch[3].trim(), 10) as 1 | 2;
+                        console.log(`[Import] Found Metadata (Standard): ${tipus} ${curs}-${quad}`);
                     } else if (simpleMatch) {
                         let rawType = simpleMatch[1].toUpperCase();
                         if (rawType.startsWith("PARCIAL")) tipus = "PARCIAL";
@@ -86,6 +112,7 @@ export async function importExcelCalendar(
 
                         curs = parseInt(simpleMatch[2], 10);
                         quad = parseInt(simpleMatch[3], 10) as 1 | 2;
+                        console.log(`[Import] Found Metadata (Simple): ${tipus} ${curs}-${quad}`);
                     }
 
                     if (tipus && curs && quad) {
@@ -108,24 +135,16 @@ export async function importExcelCalendar(
                         continue;
                     }
 
-                    // ... (Date Row check skipped for brevity in replacement if unchanged)
-
                     // 2. Check for Date Row (Week Header)
-                    // Look for at least 2 valid dates in the row
                     let validDatesInRow: { col: number; date: Date }[] = [];
                     for (let c = 1; c < row.length; c++) {
                         const cellVal = row[c];
                         if (typeof cellVal === "string" || typeof cellVal === "number") {
-                            // Try parsing dd/MM/yyyy
-                            // Excel might return number (days since 1900) or string
                             let date: Date | undefined;
                             if (typeof cellVal === "number") {
-                                // Excel date serial
                                 date = new Date(Math.round((cellVal - 25569) * 86400 * 1000));
                             } else {
                                 const valStr = cellVal.trim();
-                                // Try dd/MM/yyyy, dd-MM-yyyy, dd.MM.yyyy
-                                // Replace . and - with / for easier parsing
                                 const normalized = valStr.replace(/[.-]/g, "/");
                                 const parts = normalized.split("/");
                                 if (parts.length === 3) {
@@ -140,13 +159,12 @@ export async function importExcelCalendar(
                     }
 
                     if (validDatesInRow.length >= 2) {
-                        // Found a date row!
+                        console.log(`[Import] Found Date Row with ${validDatesInRow.length} dates`);
                         currentWeekDates = new Array(row.length).fill(null);
                         validDatesInRow.forEach((item) => {
                             currentWeekDates[item.col] = item.date;
                         });
 
-                        // Update Period start/end if needed
                         if (currentPeriod) {
                             const rowDates = validDatesInRow.map(d => d.date);
                             const minDate = new Date(Math.min(...rowDates.map(d => d.getTime())));
@@ -163,21 +181,31 @@ export async function importExcelCalendar(
                     }
 
                     // 3. Check for Time Slot Row
-                    // Regex for "HH:mm" or "HH:mm-HH:mm" or "HH:mm\nHH:mm"
-                    // Allow dot or colon for time separator. Allow various separators between start/end.
-                    const timeMatch = firstCell.match(/(\d{1,2}[:.]\d{2})(?:[\s\-\n\r]+|(?:\s*-\s*))(\d{1,2}[:.]\d{2})/);
-                    if (timeMatch && currentPeriod) {
-                        const start = timeMatch[1];
-                        const end = timeMatch[2];
+                    // Robust detection: Find ANY two time strings in the cell
+                    // Check first cell AND second cell to be sure
+                    let timeCell = firstCell;
+                    let allTimes = timeCell.match(/(\d{1,2}[:.]\d{2})/g);
 
-                        // Check if slot already exists for this period
+                    // If not found in first cell, try second cell
+                    if ((!allTimes || allTimes.length < 2) && row.length > 1) {
+                        const secondCell = (row[1] || "").toString().trim();
+                        const secondTimes = secondCell.match(/(\d{1,2}[:.]\d{2})/g);
+                        if (secondTimes && secondTimes.length >= 2) {
+                            timeCell = secondCell;
+                            allTimes = secondTimes;
+                        }
+                    }
+
+                    if (allTimes && allTimes.length >= 2 && currentPeriod) {
+                        const start = allTimes[0].replace('.', ':');
+                        const end = allTimes[1].replace('.', ':');
+                        console.log(`[Import] Found Time Slot: ${start}-${end}`);
+
                         let slotIndex = result.slotsPerPeriod[currentPeriod.id].findIndex(
                             (s) => s.start === start && s.end === end
                         );
 
                         if (slotIndex === -1) {
-                            // TimeSlot id is usually number in this project? Let's check types.
-                            // In types/examPlanner.ts: interface TimeSlot { start: string; end: string; }
                             const newSlot: TimeSlot = { start, end };
                             result.slotsPerPeriod[currentPeriod.id].push(newSlot);
                             slotIndex = result.slotsPerPeriod[currentPeriod.id].length - 1;
@@ -189,25 +217,26 @@ export async function importExcelCalendar(
                             if (!cellContent.trim()) continue;
 
                             const date = currentWeekDates[c];
-                            if (!date) continue; // Should correspond to a date column
+                            if (!date) continue;
 
                             const dateIso = format(date, "yyyy-MM-dd");
                             const key = `${dateIso}|${slotIndex}`;
 
-                            // Find Subject ID
-                            const subjectId = findSubjectId(cellContent);
-                            if (subjectId) {
-                                // Add to assignedPerPeriod
+                            // Find Subject Code
+                            const codeMatch = cellContent.match(/230\d{3,4}/);
+                            if (codeMatch) {
+                                const code = codeMatch[0];
+                                const subjectId = getOrCreateSubject(code, cellContent);
+
                                 if (!result.assignedPerPeriod[currentPeriod.id][key]) {
                                     result.assignedPerPeriod[currentPeriod.id][key] = [];
                                 }
-                                // assignedPerPeriod values are string[] (subject IDs as strings)?
-                                // Let's check types. Subject.id is string.
                                 if (!result.assignedPerPeriod[currentPeriod.id][key].includes(subjectId)) {
                                     result.assignedPerPeriod[currentPeriod.id][key].push(subjectId);
                                 }
 
-                                // Extract Rooms
+                                // Extract Rooms - DISABLED as per user request to "import only name and code"
+                                /*
                                 const lines = cellContent.split(/\r?\n/);
                                 const roomLines = lines.filter((l: string) => /Aula|Classroom/i.test(l));
                                 if (roomLines.length > 0) {
@@ -218,16 +247,18 @@ export async function importExcelCalendar(
                                     }
                                     result.roomsData[currentPeriod.id][key][subjectId] = {
                                         rooms: roomsCleaned,
-                                        students: 0
                                     };
                                 }
+                                */
                             }
                         }
                     }
                 }
 
+                console.log("[Import] Finished processing rows. Periods:", result.periods.length);
                 resolve(result);
             } catch (err) {
+                console.error("[Import] Error:", err);
                 reject(err);
             }
         };
