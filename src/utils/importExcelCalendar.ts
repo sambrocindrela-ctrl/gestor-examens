@@ -16,6 +16,58 @@ export interface ImportedCalendarData {
     subjects: Subject[];
 }
 
+// Helper to parse cell content for multiple subjects
+// Moved to top level for stability
+const parseCellSubjects = (cellContent: string) => {
+    const lines = cellContent.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+    let currentNameBuffer: string[] = [];
+    const found: { code: string, name: string }[] = [];
+
+    // Regex to identify garbage lines (Rooms, Students)
+    const garbageLineRegex = /^(?:Aula|Aules|Classroom|Laboratory|Laboratori|Students|Matriculats|Estudiants)\b/i;
+
+    // Regex to strip garbage from WITHIN lines (e.g. "Physics Classroom 101")
+    const inlineGarbageRegex = /\b(?:Aula|Aules|Classroom|Laboratory|Laboratori)\s+[\w\-\.\+\s]+(?=$|\n)/gi;
+
+    for (const line of lines) {
+        const codeMatch = line.match(/230\d{3,4}/);
+
+        // Clean the line of known garbage patterns first
+        let cleanLine = line.replace(inlineGarbageRegex, "").trim();
+
+        if (codeMatch) {
+            // Found a code line!
+            const code = codeMatch[0];
+
+            // Remove the code from the line 
+            let lineWithoutCode = cleanLine.replace(code, "").trim();
+
+            // If there is remaining text (and it's not garbage), it's part of the name
+            if (lineWithoutCode && !garbageLineRegex.test(lineWithoutCode)) {
+                currentNameBuffer.push(lineWithoutCode);
+            }
+
+            // The lines we buffered so far are the Name.
+            let name = currentNameBuffer.join(" ").trim();
+
+            found.push({ code, name });
+
+            // Reset buffer for the next subject in the same cell
+            currentNameBuffer = [];
+        } else {
+            // No code in this line. Check for garbage.
+            if (garbageLineRegex.test(line) || garbageLineRegex.test(cleanLine)) {
+                // Ignore room/student info
+            } else {
+                if (cleanLine) {
+                    currentNameBuffer.push(cleanLine);
+                }
+            }
+        }
+    }
+    return found;
+};
+
 export async function importExcelCalendar(
     file: File,
     existingSubjects: Subject[]
