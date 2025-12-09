@@ -1,5 +1,5 @@
 // src/utils/importSubjectsMerge.ts
-import { parseDateFromCell, normalizeCursAny, normalizeQuad, makeSubjectKey } from "./csvHelpers";
+import { parseDateFromCell, normalizeCursAny, normalizeQuad } from "./csvHelpers";
 import type {
   Subject,
   Period,
@@ -32,9 +32,9 @@ export function importSubjectsMerge(
 
   // Índexos auxiliars actuals
   const subjById = new Map(subjects.map((s) => [s.id, s] as const));
-  const subjKeyIndex = new Map<string, string>(); // key -> subjectId
+  const subjKeyIndex = new Map<string, string>(); // codi -> subjectId
   for (const s of subjects) {
-    const key = `${s.codi.trim().toLowerCase()}||${s.sigles.trim().toLowerCase()}`;
+    const key = s.codi.trim().toLowerCase();
     subjKeyIndex.set(key, s.id);
   }
 
@@ -54,7 +54,7 @@ export function importSubjectsMerge(
     const sigles = r.sigles ?? r.SIGLES ?? r.siglas ?? r.SIGLAS;
     if (!codi && !sigles) continue;
 
-    const k = makeSubjectKey(codi, sigles);
+    const k = (codi || "").trim().toLowerCase();
 
     const nivell = (r.nivell ?? r.NIVELL ?? r.nivel ?? r.NIVEL)?.toString();
     const curs = normalizeCursAny(r.curs ?? r.CURS ?? r.curso ?? r.CURSO);
@@ -93,6 +93,12 @@ export function importSubjectsMerge(
         nextSubjects.find((x) => x.id === subjectId)!;
 
       let changed = false;
+
+      // Update sigles if provided and different
+      if (sigles && s.sigles !== sigles) {
+        s.sigles = sigles;
+        changed = true;
+      }
 
       if (s.nivell !== (nivell || undefined)) {
         s.nivell = nivell || undefined;
