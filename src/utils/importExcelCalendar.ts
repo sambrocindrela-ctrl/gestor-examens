@@ -46,23 +46,19 @@ export async function importExcelCalendar(
                 let currentPeriod: Period | null = null;
                 let currentWeekDates: Date[] = [];
                 let periodCounter = 1;
+                let currentSlotIndex = -1; // Track current slot across rows
+
 
                 // Helper to find or create subject
                 const getOrCreateSubject = (code: string, cellContent: string): string => {
                     const existing = allSubjects.find((s) => s.codi === code);
                     if (existing) return existing.id;
 
-                    // Create new subject
-                    // Robust name extraction: remove code and room info from the full string
-                    // User confirmed this worked well previously
-                    let name = cellContent
-                        .replace(code, "") // Remove code
-                        .replace(/Aula\s+[\w\-\.\+]+/gi, "") // Remove "Aula ..."
-                        .replace(/Classroom\s+[\w\-\.\+]+/gi, "") // Remove "Classroom ..."
-                        .replace(/Students\s*[:\s]\s*\d+/gi, "") // Remove "Students..."
-                        .replace(/Matriculats\s*[:\s]\s*\d+/gi, "") // Remove "Matriculats..."
+                    // Simple rule: Everything BEFORE the code is the name, everything AFTER is discarded
+                    const parts = cellContent.split(code);
+                    let name = parts[0]
                         .replace(/\r?\n/g, " ") // Replace newlines with spaces
-                        .replace(/\s+/g, " ") // Collapse multiple spaces
+                        .replace(/\s+/g, " ")   // Collapse multiple spaces
                         .trim();
 
                     if (!name) name = `Assignatura ${code}`;
@@ -211,45 +207,51 @@ export async function importExcelCalendar(
                             slotIndex = result.slotsPerPeriod[currentPeriod.id].length - 1;
                         }
 
+                        // Update the current slot index for subsequent rows
+                        currentSlotIndex = slotIndex;
+                    }
+
+                    // 4. Process subject cells if we have a current slot
+                    // This processes BOTH the time slot row AND subsequent subject rows
+                    if (currentPeriod && currentSlotIndex !== -1) {
                         // Process cells in this row for subjects
+                        console.log(`[Import] Processing row ${r}, ${row.length} cells for slot ${currentSlotIndex}`);
                         for (let c = 1; c < row.length; c++) {
                             const cellContent = (row[c] || "").toString();
+                            console.log(`[Import] Cell ${c}: "${cellContent.substring(0, 50)}${cellContent.length > 50 ? '...' : ''}"`);
                             if (!cellContent.trim()) continue;
 
                             const date = currentWeekDates[c];
-                            if (!date) continue;
+                            if (!date) {
+                                console.log(`[Import] Cell ${c}: No date found for this column`);
+                                continue;
+                            }
 
                             const dateIso = format(date, "yyyy-MM-dd");
-                            const key = `${dateIso}|${slotIndex}`;
+                            const key = `${dateIso}|${currentSlotIndex}`;
 
-                            // Find Subject Code
-                            const codeMatch = cellContent.match(/230\d{3,4}/);
-                            if (codeMatch) {
-                                const code = codeMatch[0];
-                                const subjectId = getOrCreateSubject(code, cellContent);
+                            // Split cell content by newlines to handle multiple subjects per cell
+                            const lines = cellContent.split(/\r?\n/).map((l: string) => l.trim()).filter((l: string) => l);
+                            console.log(`[Import] Cell ${c} has ${lines.length} lines`);
 
-                                if (!result.assignedPerPeriod[currentPeriod.id][key]) {
-                                    result.assignedPerPeriod[currentPeriod.id][key] = [];
-                                }
-                                if (!result.assignedPerPeriod[currentPeriod.id][key].includes(subjectId)) {
-                                    result.assignedPerPeriod[currentPeriod.id][key].push(subjectId);
-                                }
+                            for (const line of lines) {
+                                // Find Subject Code in this line
+                                const codeMatch = line.match(/230\d{3,4}/);
+                                if (codeMatch) {
+                                    const code = codeMatch[0];
+                                    const subjectId = getOrCreateSubject(code, line);
 
-                                // Extract Rooms - DISABLED as per user request to "import only name and code"
-                                /*
-                                const lines = cellContent.split(/\r?\n/);
-                                const roomLines = lines.filter((l: string) => /Aula|Classroom/i.test(l));
-                                if (roomLines.length > 0) {
-                                    const roomsCleaned = roomLines.map((l: string) => l.replace(/Aula|Classroom/gi, "").trim());
-
-                                    if (!result.roomsData[currentPeriod.id][key]) {
-                                        result.roomsData[currentPeriod.id][key] = {};
+                                    if (!result.assignedPerPeriod[currentPeriod.id][key]) {
+                                        result.assignedPerPeriod[currentPeriod.id][key] = [];
                                     }
-                                    result.roomsData[currentPeriod.id][key][subjectId] = {
-                                        rooms: roomsCleaned,
-                                    };
+                                    if (!result.assignedPerPeriod[currentPeriod.id][key].includes(subjectId)) {
+                                        result.assignedPerPeriod[currentPeriod.id][key].push(subjectId);
+                                    }
+
+                                    console.log(`[Import] ✓ Assigned ${code} to ${dateIso} slot ${currentSlotIndex}`);
+                                } else {
+                                    console.log(`[Import] Cell ${c}, line: "${line}" - No code found`);
                                 }
-                                */
                             }
                         }
                     }
