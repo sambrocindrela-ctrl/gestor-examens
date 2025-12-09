@@ -49,11 +49,13 @@ const ADMIN_PASSWORD = "admin2025";
 const isAdminMode = ref(true);
 
 // Load admin status from sessionStorage on mount
+// Default is unlocked (true), only lock if explicitly set to false
 onMounted(() => {
   const savedAdminStatus = sessionStorage.getItem("isAdminMode");
-  if (savedAdminStatus === "true") {
-    isAdminMode.value = true;
+  if (savedAdminStatus === "false") {
+    isAdminMode.value = false;
   }
+  // Otherwise, keep default unlocked state (true)
 });
 
 function toggleAdminMode(password?: string) {
