@@ -24,18 +24,20 @@ function onAdd() {
 
 <template>
   <div class="fixed bottom-6 right-6 z-50">
-    <VueDraggable
-      v-model="trashList"
-      group="subjects"
-      @add="onAdd"
-      class="flex items-center gap-2 px-4 py-3 rounded-2xl border shadow-md bg-white transition-colors"
-      ghost-class="hidden"
-    >
+    <ClientOnly>
+      <VueDraggable
+        v-model="trashList"
+        group="subjects"
+        @add="onAdd"
+        class="flex items-center gap-2 px-4 py-3 rounded-2xl border shadow-md bg-white transition-colors"
+        ghost-class="hidden"
+      >
       <span class="text-sm">🗑️ Paperera</span>
       <span class="text-xs text-gray-500">
         Arrossega aquí per eliminar
       </span>
-    </VueDraggable>
+      </VueDraggable>
+    </ClientOnly>
   </div>
 </template>
 

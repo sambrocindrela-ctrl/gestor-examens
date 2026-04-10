@@ -2,34 +2,34 @@
 import { computed, ref, onMounted } from "vue";
 import * as Papa from "papaparse";
 
-import { useExamPlannerState } from "./composables/useExamPlannerState";
-import { importSubjectsReplace } from "./utils/importSubjectsReplace";
-import { importSubjectsMerge } from "./utils/importSubjectsMerge";
-import { importRooms } from "./utils/importRooms";
+import { useExamPlannerState } from "@/composables/useExamPlannerState";
+import { importSubjectsReplace } from "@/utils/importSubjectsReplace";
+import { importSubjectsMerge } from "@/utils/importSubjectsMerge";
+import { importRooms } from "@/utils/importRooms";
 import {
   exportPlannerJSON,
   exportPlannerCSV,
   exportPlannerTXT,
   exportPlannerExcel,
   exportPlannerWord,
-} from "./utils/exporters";
+} from "@/utils/exporters";
 
-import { exportGEFExcelFromTemplate } from "./utils/exportGEFExcel";
+import { exportGEFExcelFromTemplate } from "@/utils/exportGEFExcel";
   
-import type { ImportedCalendarData } from "./utils/importExcelCalendar";
-import type { Subject, AssignedMap } from "./types/examPlanner";
-import type { CalendarSummary } from "./types/savedCalendar";
+import type { ImportedCalendarData } from "@/utils/importExcelCalendar";
+import type { Subject, AssignedMap } from "@/types/examPlanner";
+import type { CalendarSummary } from "@/types/savedCalendar";
 
-import PlannerToolbar from "./components/PlannerToolbar.vue";
-import SubjectsTray from "./components/SubjectsTray.vue";
-import ExamCalendarGrid from "./components/ExamCalendarGrid.vue";
-import TrashBin from "./components/TrashBin.vue";
+import PlannerToolbar from "@/components/PlannerToolbar.vue";
+import SubjectsTray from "@/components/SubjectsTray.vue";
+import ExamCalendarGrid from "@/components/ExamCalendarGrid.vue";
+import TrashBin from "@/components/TrashBin.vue";
 import {
   buildPlannerDocumentFromSnapshot,
   buildSnapshotFromPlannerDocument,
-} from "./utils/plannerSerialization";
-import { remoteCalendarRepository } from "./services/remoteCalendarRepository";
-import { buildNextYearCalendarFromTemplate } from "./utils/buildNextYearCalendar";
+} from "@/utils/plannerSerialization";
+import { remoteCalendarRepository } from "@/services/remoteCalendarRepository";
+import { buildNextYearCalendarFromTemplate } from "@/utils/buildNextYearCalendar";
 
 const {
   subjects,
@@ -56,7 +56,7 @@ const {
 
 /* --- Admin Mode / Password Protection --- */
 
-const ADMIN_PASSWORD = "admin2025";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const isAdminMode = ref(false);
 const savedCalendars = ref<CalendarSummary[]>([]);
 const selectedCalendarId = ref("");

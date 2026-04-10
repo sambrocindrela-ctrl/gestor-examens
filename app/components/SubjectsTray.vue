@@ -40,19 +40,21 @@ function clone(element: Subject) {
   <div class="p-4 rounded-2xl border shadow-sm bg-white mb-3">
     <h2 class="font-semibold mb-3">Assignatures (arrossega)</h2>
 
-    <VueDraggable
-      v-model="list"
-      :group="{ name: 'subjects', pull: 'clone', put: false }"
-      :clone="clone"
-      :sort="false"
-      class="flex flex-wrap gap-2 min-h-[50px]"
-    >
+    <ClientOnly>
+      <VueDraggable
+        v-model="list"
+        :group="{ name: 'subjects', pull: 'clone', put: false }"
+        :clone="clone"
+        :sort="false"
+        class="flex flex-wrap gap-2 min-h-[50px]"
+      >
       <TrayChip
         v-for="s in list"
         :key="s.id"
         :s="s"
       />
-    </VueDraggable>
+      </VueDraggable>
+    </ClientOnly>
 
     <div v-if="!availableSubjects.length" class="text-xs text-gray-500 italic mt-2">
       No hi ha assignatures per al curs/quadrimestre i període

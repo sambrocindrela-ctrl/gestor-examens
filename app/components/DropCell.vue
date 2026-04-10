@@ -39,13 +39,14 @@ function onRemove(subjectId: string) {
       disabled ? 'bg-gray-100 text-gray-400' : 'bg-white'
     ]"
   >
-    <VueDraggable
-      v-model="list"
-      group="subjects"
-      class="space-y-2 min-h-[80px] h-full w-full p-2"
-      :disabled="disabled"
-      ghost-class="opacity-50"
-    >
+    <ClientOnly>
+      <VueDraggable
+        v-model="list"
+        group="subjects"
+        class="space-y-2 min-h-[80px] h-full w-full p-2"
+        :disabled="disabled"
+        ghost-class="opacity-50"
+      >
       <div v-for="s in list" :key="s.id" class="relative group">
         <!-- Capseta arrossegable entre cel·les -->
         <PlacedChip
@@ -70,6 +71,7 @@ function onRemove(subjectId: string) {
       >
         {{ disabled ? "No disponible" : "Arrossega aquí" }}
       </div>
-    </VueDraggable>
+      </VueDraggable>
+    </ClientOnly>
   </td>
 </template>
