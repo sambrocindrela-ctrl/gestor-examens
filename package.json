@@ -4,17 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 1024 --https --host local.dev.upc.edu --open",
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.15.2",
-    "@supabase/supabase-js": "^2.99.3",
     "@tailwindcss/vite": "^4.2.2",
     "date-fns": "^4.1.0",
     "docx": "^9.5.1",
+    "keycloak-js": "^26.2.3",
     "lz-string": "^1.5.0",
     "nuxt": "^4.4.2",
     "nuxt-quasar-ui": "3.0.1",
