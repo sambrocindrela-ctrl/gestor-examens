@@ -18,6 +18,7 @@ import type {
   RoomsEnroll,
 } from "../types/examPlanner";
 import DropCell from "./DropCell.vue";
+import { useDarkColors } from "../composables/useDarkColors";
 
 const props = defineProps<{
   activePeriod: Period;
@@ -84,6 +85,16 @@ const weeks = computed(() => {
   return list;
 });
 
+const {
+  dark,
+  primaryColor,
+  secondaryColor,
+  primaryTextClass,
+  secondaryTextClass,
+  headerRowClass,
+  mutedColor,
+} = useDarkColors();
+
 /* --- Handlers --- */
 function onRemoveOne(dateIso: string, slotIndex: number, subjectId: string) {
   emit('remove-one-from-cell', props.activePid, dateIso, slotIndex, subjectId);
@@ -115,37 +126,38 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
 
 <template>
   <section>
-    <div class="flex items-center gap-3 mb-2">
-      <h5 :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'" class="text-lg font-semibold">
+    <!-- Period title -->
+    <header class="flex items-center gap-3 mb-2">
+      <h5 :class="primaryTextClass" class="text-lg font-semibold">
         {{ activePeriod.tipus }} —
         {{ format(parseISO(activePeriod.startStr), "dd/MM") }} a
         {{ format(parseISO(activePeriod.endStr), "dd/MM") }}
       </h5>
-      <span class="text-sm text-gray-500">(dl–dv)</span>
-    </div>
+      <span class="text-sm text-grey-6">(dl–dv)</span>
+    </header>
 
-    <div v-for="(week, wIdx) in weeks" :key="wIdx" class="q-mb-xl">
+    <article v-for="(week, wIdx) in weeks" :key="wIdx" class="q-mb-xl">
+      <!-- Week header -->
       <div class="flex items-center gap-sm q-mb-sm">
-        <q-icon name="calendar_view_week" size="sm" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" />
-        <h6 :class="$q.dark.isActive ? 'text-teal-3' : 'text-teal-9'" class="text-subtitle1 font-bold q-ma-none">
+        <q-icon name="calendar_view_week" size="sm" :color="secondaryColor" />
+        <h6 :class="secondaryTextClass" class="text-subtitle1 font-bold q-ma-none">
           Setmana {{ format(week.mon, "dd/MM") }} — {{ format(week.fri, "dd/MM") }}
         </h6>
-        <q-badge outline :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" label="dl–dv" class="q-ml-sm" />
+        <q-badge outline :color="secondaryColor" label="dl–dv" class="q-ml-sm" />
       </div>
 
-      <q-markup-table :dark="$q.dark.isActive" flat bordered dense class="shadow-1 overflow-hidden" separator="cell">
+      <!-- Calendar table -->
+      <q-markup-table :dark="dark" flat bordered dense class="shadow-1 overflow-hidden" separator="cell">
         <thead>
-          <tr :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'" class="border-b">
-            <th :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-left font-bold"
-              style="width: 120px;">
+          <tr :class="headerRowClass" class="border-b">
+            <th :class="mutedTextClass" class="text-left font-bold" style="width: 120px;">
               <div class="q-pa-xs">Franja</div>
             </th>
             <th v-for="i in 5" :key="i" class="text-left font-bold" style="min-width: 180px;">
-              <div :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-uppercase"
-                style="font-size: 0.70rem; letter-spacing: 0.5px;">
+              <div :class="mutedTextClass" class="text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.5px;">
                 {{ ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres"][i - 1] }}
               </div>
-              <div :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'" class="text-subtitle2">
+              <div :class="primaryTextClass" class="text-subtitle2">
                 {{ fmtDM(addDays(week.mon, i - 1)) }}
               </div>
             </th>
@@ -153,24 +165,30 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
         </thead>
         <tbody>
           <tr v-for="(slot, slotIndex) in (slotsPerPeriod[activePid] ?? [])" :key="slotIndex">
-            <td :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'"
-              class="text-left align-top border-r">
-              <div :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-weight-bold q-mt-xs">
+            <td :class="[headerRowClass, 'text-left align-top border-r']">
+              <div :class="mutedTextClass" class="text-weight-bold q-mt-xs">
                 {{ slot.start }}<span class="text-weight-light text-grey-5"> – </span>{{ slot.end }}
               </div>
             </td>
-            <DropCell v-for="i in 5" :key="i" :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
-              :pid="activePid" :dateIso="iso(addDays(week.mon, i - 1))" :slotIndex="slotIndex"
+            <DropCell
+              v-for="i in 5" :key="i"
+              :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
+              :pid="activePid"
+              :dateIso="iso(addDays(week.mon, i - 1))"
+              :slotIndex="slotIndex"
               :disabled="isDisabledDay(addDays(week.mon, i - 1), activePeriod)"
-              :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)" :extrasForSubjects="getExtrasForSubjects(
+              :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)"
+              :extrasForSubjects="getExtrasForSubjects(
                 iso(addDays(week.mon, i - 1)),
                 slotIndex,
                 (assignedPerPeriod[activePid] ?? {})[cellKey(iso(addDays(week.mon, i - 1)), slotIndex)] ?? []
-              )" @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
-              @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)" />
+              )"
+              @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
+              @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)"
+            />
           </tr>
         </tbody>
       </q-markup-table>
-    </div>
+    </article>
   </section>
 </template>

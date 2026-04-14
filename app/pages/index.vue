@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from "vue";
 import * as Papa from "papaparse";
 
 import { useExamPlannerState } from "@/composables/useExamPlannerState";
+import { useDarkColors } from "@/composables/useDarkColors";
 import { importSubjectsReplace } from "@/utils/importSubjectsReplace";
 import { importSubjectsMerge } from "@/utils/importSubjectsMerge";
 import { importRooms } from "@/utils/importRooms";
@@ -53,6 +54,8 @@ const {
   loadStateFromUrl,
   copyLinkToClipboard,
 } = useExamPlannerState();
+
+const { primaryColor, secondaryColor, primaryTextClass, secondaryTextClass } = useDarkColors();
 
 /* --- Admin Mode / Password Protection --- */
 const configRT = useRuntimeConfig();
@@ -762,26 +765,26 @@ function handleExplainTemplateUse() {
         @explain-template-use="handleExplainTemplateUse" @toggle-admin-mode="toggleAdminMode" />
 
 
-      <!-- Configuració del període actiu (informació compacta) -->
+      <!-- Active period summary card -->
       <q-card v-if="activePeriod"
         class="bg-primary-50 dark:bg-primary-950 shadow-1 border border-primary-100 dark:border-primary-900 q-mb-md">
         <q-card-section class="flex flex-wrap items-center gap-6">
           <!-- Period info -->
           <div class="flex items-center gap-sm">
-            <q-icon name="event_available" :color="$q.dark.isActive ? 'primary-300' : 'primary-800'" size="sm" />
-            <span class="text-subtitle1 text-weight-bold transition-colors" :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'">Període actiu:</span>
+            <q-icon name="event_available" :color="primaryColor" size="sm" />
+            <span :class="primaryTextClass" class="text-subtitle1 text-weight-bold">Període actiu:</span>
             <q-chip color="primary" text-color="white" icon="flag" class="text-weight-bold">
               {{ activePeriod.tipus }} {{ activePeriod.curs || '—' }}-{{ activePeriod.quad || '—' }}
             </q-chip>
           </div>
 
-          <!-- Time slots info -->
+          <!-- Time slots -->
           <div class="flex items-center gap-2">
-            <q-icon name="schedule" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" size="sm" />
-            <span class="text-subtitle1 text-weight-bold transition-colors" :class="$q.dark.isActive ? 'text-teal-3' : 'text-teal-9'">Franges horàries:</span>
+            <q-icon name="schedule" :color="secondaryColor" size="sm" />
+            <span :class="secondaryTextClass" class="text-subtitle1 text-weight-bold">Franges horàries:</span>
             <div class="flex flex-wrap gap-2">
-              <q-chip v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" outline
-                :text-color="$q.dark.isActive ? 'teal-3' : 'teal-9'" size="sm" class="text-weight-bold q-ma-none font-mono">
+              <q-chip v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i" :color="secondaryColor" outline
+                :text-color="secondaryColor" class="text-weight-bold q-ma-none font-mono">
                 {{ s.start }}–{{ s.end }}
               </q-chip>
             </div>
