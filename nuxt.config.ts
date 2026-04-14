@@ -39,7 +39,7 @@ export default defineNuxtConfig({
         QBtn: {
           dense: false,
           noCaps: true,
-          rounded: true
+          square: true
         },
         QTable: {
           pagination: {

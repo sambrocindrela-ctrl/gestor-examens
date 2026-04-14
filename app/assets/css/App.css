@@ -1,8 +1,29 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 /* Habilita utilidades de Tailwind para usarlas con @apply en este archivo */
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .body--dark, .dark *, .body--dark *));
 @theme {
   --color-gray-light: #f9fafb;
+  --color-primary-50: #e6f5fc;
+  --color-primary-100: #ccebf9;
+  --color-primary-200: #99d6f2;
+  --color-primary-300: #66c2ec;
+  --color-primary-400: #33ade6;
+  --color-primary-500: #007bc0;
+  --color-primary-600: #006eb1;
+  --color-primary-700: #005f98;
+  --color-primary-800: #004d7c;
+  --color-primary-900: #003e63;
+  --color-primary-950: #001f31;
+
+  /* Quasar Config Colors */
+  --color-primary: #007bc0;
+  --color-secondary: #26a69a;
+  --color-accent: #9c27b0;
+  --color-dark: #1d1d1d;
+  --color-positive: #007e33;
+  --color-negative: #cc0000;
+  --color-info: #31ccec;
+  --color-warning: #d14900;
 }
 #root {
   max-width: 1280px;

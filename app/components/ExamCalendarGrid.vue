@@ -116,19 +116,19 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
 <template>
   <div class="mb-8">
     <div class="flex items-center gap-3 mb-2">
-      <h3 class="text-lg font-semibold">
+      <h5 class="text-lg font-semibold text-primary">
         {{ activePeriod.tipus }} —
         {{ format(parseISO(activePeriod.startStr), "dd/MM") }} a
         {{ format(parseISO(activePeriod.endStr), "dd/MM") }}
-      </h3>
+      </h5>
       <span class="text-sm text-gray-500">(dl–dv)</span>
     </div>
 
     <div v-for="(week, wIdx) in weeks" :key="wIdx" class="mt-6">
       <div class="flex items-center gap-3 mb-2">
-        <h4 class="font-semibold">
+        <h6 class="font-semibold text-secondary">
           Setmana {{ format(week.mon, "dd/MM") }} — {{ format(week.fri, "dd/MM") }}
-        </h4>
+        </h6>
         <span class="text-xs text-gray-500">(dl–dv)</span>
       </div>
       <div class="overflow-x-auto">
@@ -151,23 +151,15 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
               <td class="border p-2 align-top font-medium whitespace-nowrap">
                 {{ slot.start }}-{{ slot.end }}
               </td>
-              <DropCell
-                v-for="i in 5"
-                :key="i"
-                :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
-                :pid="activePid"
-                :dateIso="iso(addDays(week.mon, i - 1))"
-                :slotIndex="slotIndex"
+              <DropCell v-for="i in 5" :key="i" :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
+                :pid="activePid" :dateIso="iso(addDays(week.mon, i - 1))" :slotIndex="slotIndex"
                 :disabled="isDisabledDay(addDays(week.mon, i - 1), activePeriod)"
-                :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)"
-                :extrasForSubjects="getExtrasForSubjects(
+                :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)" :extrasForSubjects="getExtrasForSubjects(
                   iso(addDays(week.mon, i - 1)),
                   slotIndex,
                   (assignedPerPeriod[activePid] ?? {})[cellKey(iso(addDays(week.mon, i - 1)), slotIndex)] ?? []
-                )"
-                @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
-                @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)"
-              />
+                )" @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
+                @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)" />
             </tr>
           </tbody>
         </table>

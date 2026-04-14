@@ -34,9 +34,9 @@ function onRemove(subjectId: string) {
 
 <template>
   <td
-    class="align-top min-w-[170px] border transition-colors"
+    class="align-top min-w-[170px] border border-grey-3 dark:border-grey-9 transition-colors"
     :class="[
-      disabled ? 'bg-gray-100 text-gray-400' : 'bg-white'
+      disabled ? 'bg-grey-2 text-grey-6 dark:bg-grey-10 dark:text-grey-8' : 'bg-white dark:bg-grey-9'
     ]"
   >
     <ClientOnly>
@@ -54,15 +54,14 @@ function onRemove(subjectId: string) {
           :extra="extrasForSubjects?.[s.id]"
         />
 
-        <button
+        <q-btn
           v-if="!disabled"
           @click.stop="onRemove(s.id)"
-          class="absolute -top-2 -right-2 w-6 h-6 rounded-full border bg-white shadow text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+          class="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          dense size="xs" color="negative" icon="close"
           aria-label="Eliminar"
           title="Eliminar d'aquesta cel·la"
-        >
-          ×
-        </button>
+        />
       </div>
 
       <div

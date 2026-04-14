@@ -736,9 +736,9 @@ function handleExplainTemplateUse() {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen font-sans text-gray-900">
+  <main class="flex flex-col gap-4 h-screen text-gray-900 p-6">
     <!-- Header Section (Fixed) -->
-    <div class="flex-shrink-0 p-6 border-b bg-white">
+    <div class="shrink-0 flex flex-col gap-4">
 
       <PlannerToolbar :availableSubjects="availableSubjects" :subjects="subjects" :lastDeleted="lastDeleted"
         :periods="periods" :activePid="activePid" :isAdminMode="isAdminMode" :savedCalendars="savedCalendars"
@@ -763,41 +763,41 @@ function handleExplainTemplateUse() {
 
 
       <!-- Configuració del període actiu (informació compacta) -->
-      <div v-if="activePeriod" class="p-4 rounded-2xl border shadow-sm bg-white mt-6">
-        <div class="flex flex-wrap items-center gap-6 text-lg">
+      <q-card v-if="activePeriod" class="q-pa-md" flat>
+        <q-card-section class=" flex flex-wrap items-center gap-6 text-lg">
           <!-- Period info -->
           <div class="flex items-center gap-2">
-            <span class="font-semibold text-gray-700">Període:</span>
-            <span class="px-3 py-1 bg-blue-50 rounded-full font-medium">
+            <span class="font-semibold text-primary">Període:</span>
+            <span class="px-3 py-1 font-medium text-secondary">
               {{ activePeriod.tipus }} {{ activePeriod.curs || '—' }}-{{ activePeriod.quad || '—' }}
             </span>
           </div>
 
           <!-- Time slots info -->
           <div class="flex items-center gap-2">
-            <span class="font-semibold text-gray-700">Franges horàries:</span>
+            <span class="font-semibold text-primary">Franges horàries:</span>
             <div class="flex flex-wrap gap-2">
               <span v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i"
-                class="px-2 py-1 bg-gray-100 rounded text-sm font-mono">
+                class="px-2 py-1 bg-secondary/50 rounded text-sm font-mono">
                 {{ s.start }}–{{ s.end }}
               </span>
             </div>
           </div>
-        </div>
-      </div>
+        </q-card-section>
+      </q-card>
 
     </div>
 
     <!-- Two-Column Layout with Independent Scrolling -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-hidden gap-4">
       <!-- Left Column: Subjects Tray -->
-      <div class="w-1/3 border-r bg-gray-50 overflow-y-auto p-6">
+      <div class="w-1/3 overflow-y-auto">
         <SubjectsTray :availableSubjects="availableSubjects" :subjects="subjects" :hiddenSubjectIds="hiddenSubjectIds"
           @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" />
       </div>
 
       <!-- Right Column: Calendar -->
-      <div class="flex-1 overflow-y-auto p-6 bg-white">
+      <div class="flex-1 overflow-y-auto">
         <ExamCalendarGrid v-if="activePeriod" :activePeriod="activePeriod" :activePid="activePid"
           :slotsPerPeriod="slotsPerPeriod" :assignedPerPeriod="assignedPerPeriod" :subjects="subjects"
           :roomsData="roomsData" @remove-one-from-cell="handleRemoveOneFromCell"
@@ -807,5 +807,5 @@ function handleExplainTemplateUse() {
 
     <!-- Trash Bin (Fixed at bottom-right) -->
     <TrashBin @delete="deleteSubjectPermanently" />
-  </div>
+  </main>
 </template>

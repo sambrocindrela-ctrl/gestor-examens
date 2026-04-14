@@ -146,268 +146,186 @@ function handleImportExcel(event: Event) {
 </script>
 
 <template>
-  <div class="p-4  mb-6">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h4 class="text-2xl font-semibold text-primary">Gestió del calendari</h4>
+  <section>
+    <div class="flex flex-wrap items-center justify-between gap-md pb-8">
+      <h4 class="text-h4 text-primary q-ma-none text-weight-bold">Gestió del calendari</h4>
 
       <div class="flex items-center gap-2">
-        <button @click="toggleAdvancedPanel" :disabled="!isAdminMode"
-          class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-          :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-          ⚙ Accions avançades
-          <span v-if="isAdminMode">
-            {{ showAdvancedPanel ? "▲" : "▼" }}
-          </span>
-        </button>
+        <q-btn @click="toggleAdvancedPanel" :disable="!isAdminMode" :outline="!isAdminMode" :flat="isAdminMode"
+          color="primary" icon="settings"
+          :label="'Accions avançades' + (isAdminMode ? (showAdvancedPanel ? ' ▲' : ' ▼') : '')" />
 
-        <button v-if="!isAdminMode" @click="attemptUnlock"
-          class="px-3 py-2 text-sm border rounded-xl bg-yellow-50 hover:bg-yellow-100 border-yellow-300 font-medium">
-          🔓 Desbloquejar
-        </button>
+        <q-btn v-if="!isAdminMode" @click="attemptUnlock" color="warning" outline icon="lock_open"
+          label="Desbloquejar" />
 
-        <button v-else @click="lockAdmin"
-          class="px-3 py-2 text-sm border rounded-xl bg-green-50 hover:bg-green-100 border-green-300 font-medium">
-          🔒 Bloquejar
-        </button>
+        <q-btn v-else @click="lockAdmin" color="positive" outline icon="lock" label="Bloquejar" />
       </div>
     </div>
 
-    <div class="space-y-4">
-      <div class="border rounded-xl p-3 bg-primary-50">
-        <h5 class="text-sm font-semibold text-gray-700 mb-3">
-          Calendaris guardats
-        </h5>
+    <div class="q-gutter-y-md">
+      <q-card flat bordered class="q-pa-md bg-primary-100">
+        <q-card-section>
+          <div class="text-subtitle2 text-weight-bold text-grey-8 q-mb-sm">
+            Calendaris guardats
+          </div>
 
-        <div class="flex flex-wrap gap-3 items-center">
-          <select :value="selectedTitulacio" :disabled="props.isTitulacioLocked"
-            @change="emit('set-selected-titulacio', ($event.target as HTMLSelectElement).value)"
-            class="px-3 py-2 border rounded bg-white min-w-[220px]"
-            :class="props.isTitulacioLocked ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''">
-            <option value="">Totes les titulacions</option>
-            <option v-for="tit in titulacionsDisponibles" :key="tit" :value="tit">
-              {{ tit }}
-            </option>
-          </select>
+          <div class="flex flex-wrap gap-2 items-center justify-between">
+            <section class="flex flex-row gap-4 items-center">
+              <q-select :model-value="selectedTitulacio" :disable="props.isTitulacioLocked"
+                @update:model-value="(val) => emit('set-selected-titulacio', val)"
+                :options="[{ label: 'Totes les titulacions', value: '' }, ...titulacionsDisponibles.map(t => ({ label: t, value: t }))]"
+                emit-value map-options outlined dense style="min-width: 220px;"
+                :class="!$q.dark.isActive ? 'bg-white' : ''" />
 
-          <span v-if="props.isTitulacioLocked" class="text-xs text-gray-600">
-            Titulació fixada per l'enllaç
-          </span>
+              <span v-if="props.isTitulacioLocked" class="text-caption text-grey-6">
+                Titulació fixada per l'enllaç
+              </span>
 
-          <select :value="selectedCalendarId"
-            @change="emit('set-selected-calendar-id', ($event.target as HTMLSelectElement).value)"
-            class="px-3 py-2 border rounded bg-white min-w-[320px]">
-            <option value="">Selecciona un calendari</option>
-            <option v-for="cal in savedCalendars" :key="cal.id" :value="cal.id">
-              {{ cal.name }}
-            </option>
-          </select>
+              <q-select :model-value="selectedCalendarId"
+                @update:model-value="(val) => emit('set-selected-calendar-id', val)"
+                :options="[{ label: 'Selecciona un calendari', value: '' }, ...savedCalendars.map(c => ({ label: c.name, value: c.id }))]"
+                emit-value map-options outlined dense style="min-width: 320px;"
+                :class="!$q.dark.isActive ? 'bg-white' : ''" />
+            </section>
+            <section class="flex flex-row gap-4">
+              <q-btn color="primary" @click="emit('save-supabase')" label="Guardar" icon="save" />
+              <q-btn outline color="primary" @click="emit('load-latest-supabase-calendar')" label="Carregar últim"
+                icon="history" />
+              <q-btn outline color="primary" @click="emit('rename-selected-supabase-calendar')" label="Reanomenar"
+                icon="edit" />
 
-          <button @click="emit('load-latest-supabase-calendar')"
-            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Carregar últim
-          </button>
+              <q-btn outline color="secondary" @click="emit('export-excel')" label="Excel" icon="table_view" />
+              <q-btn outline color="secondary" @click="emit('export-word')" label="Word" icon="description" />
 
-          <button @click="emit('save-supabase')"
-            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Guardar
-          </button>
+              <q-btn outline color="negative" @click="emit('delete-selected-supabase-calendar')" label="Eliminar"
+                icon="delete" />
+            </section>
+          </div>
+        </q-card-section>
+      </q-card>
 
-          <button @click="emit('rename-selected-supabase-calendar')"
-            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Reanomenar seleccionat
-          </button>
-
-          <button @click="emit('delete-selected-supabase-calendar')"
-            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Eliminar seleccionat
-          </button>
-
-          <button @click="emit('export-excel')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Exportar calendari en Excel
-          </button>
-
-          <button @click="emit('export-word')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-            Exportar calendari en Word
-          </button>
-
+      <q-card v-if="showAdvancedPanel" flat bordered class="bg-grey-1 q-pa-md">
+        <div class="text-subtitle2 text-weight-bold text-grey-8 q-mb-sm">
+          <q-icon name="settings" class="q-mr-sm" /> Accions avançades
         </div>
-      </div>
 
-      <div v-if="showAdvancedPanel" class="border rounded-xl p-3 bg-gray-50">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">
-          ⚙ Accions avançades
-        </h3>
+        <div class="q-gutter-y-sm">
+          <q-card flat bordered class="bg-grey-2 q-pa-md">
+            <div class="text-subtitle2 text-weight-bold text-grey-8 q-mb-sm">
+              <q-icon name="lock" class="q-mr-sm" /> Administració d'importació i exportació tècnica
+            </div>
 
-        <div class="space-y-4">
-          <div class="border rounded-xl p-3 bg-gray-50">
-            <h4 class="text-sm font-semibold text-gray-700 mb-3">
-              🔒 Administració d'importació i exportació tècnica
-            </h4>
-
-            <p class="text-sm text-gray-600 mb-3">
+            <p class="text-caption text-grey-7 q-mb-md">
               CSV esperat (assignatures/períodes):
-              <code class="bg-gray-100 px-1 rounded">
-    codi,sigles,nivell,curs,quadrimestre,period_id,period_tipus,period_inici,period_fi,period_slots,period_blackouts
-  </code>
-              . Opcional: <code class="bg-gray-100 px-1 rounded">MET,MATT,MEE,MCYBERS</code>.
+              <code class="bg-grey-3 q-pa-xs rounded-borders">codi,sigles,nivell,...</code>.
+              Opcional: <code class="bg-grey-3 q-pa-xs rounded-borders">MET,MATT,MEE,MCYBERS</code>.
             </p>
 
-            <div class="flex flex-wrap gap-3 items-center">
-              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+            <div class="flex flex-wrap gap-2 items-center">
+              <q-btn :disable="!isAdminMode" outline color="primary" icon="upload_file"
+                @click="$refs.importCsvBtn.pickFiles()">
                 Importar CSV (REEMPLAÇA)
-                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
-                  @change="(e) => emit('import-csv', e)" />
-              </label>
+                <q-file v-show="false" ref="importCsvBtn" accept=".csv,text/csv"
+                  @update:model-value="(val) => { if (val) emit('import-csv', { target: { files: [val] } }) }" />
+              </q-btn>
 
-              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Afegir assignatures (CSV) — MERGE
-                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
-                  @change="(e) => emit('merge-subjects-csv', e)" />
-              </label>
+              <q-btn :disable="!isAdminMode" outline color="primary" icon="merge"
+                @click="$refs.mergeCsvBtn.pickFiles()">
+                Afegir assignatures (MERGE)
+                <q-file v-show="false" ref="mergeCsvBtn" accept=".csv,text/csv"
+                  @update:model-value="(val) => { if (val) emit('merge-subjects-csv', { target: { files: [val] } }) }" />
+              </q-btn>
 
-              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Importar Aules/Matriculats (CSV)
-                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
-                  @change="(e) => emit('import-rooms-csv', e)" />
-              </label>
+              <q-btn :disable="!isAdminMode" outline color="primary" icon="room"
+                @click="$refs.importRoomsBtn.pickFiles()">
+                Importar Aules/Matriculats
+                <q-file v-show="false" ref="importRoomsBtn" accept=".csv,text/csv"
+                  @update:model-value="(val) => { if (val) emit('import-rooms-csv', { target: { files: [val] } }) }" />
+              </q-btn>
 
-              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Importar calendari en Excel
-                <input type="file" accept=".xlsx, .xls" class="hidden" :disabled="!isAdminMode"
-                  @change="handleImportExcel" />
-              </label>
+              <q-btn :disable="!isAdminMode" outline color="primary" icon="table_chart"
+                @click="$refs.importExcelBtn.pickFiles()">
+                Importar calendari Excel
+                <q-file v-show="false" ref="importExcelBtn" accept=".xlsx, .xls"
+                  @update:model-value="(val) => { if (val) handleImportExcel({ target: { files: [val] } }) }" />
+              </q-btn>
 
-              <button @click="emit('export-csv')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Exportar CSV
-              </button>
+              <q-btn :disable="!isAdminMode" outline color="primary" @click="emit('export-csv')" label="Exportar CSV" />
+              <q-btn :disable="!isAdminMode" outline color="primary" @click="emit('export-txt')" label="Exportar TXT" />
+              <q-btn :disable="!isAdminMode" outline color="primary" @click="emit('export-json')"
+                label="Exportar JSON" />
 
-              <button @click="emit('export-txt')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Exportar TXT
-              </button>
-
-              <button @click="emit('export-json')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Exportar JSON
-              </button>
-
-              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+              <q-btn :disable="!isAdminMode" outline color="primary" icon="code"
+                @click="$refs.importJsonBtn.pickFiles()">
                 Importar JSON
-                <input type="file" accept="application/json" class="hidden" :disabled="!isAdminMode"
-                  @change="(e) => emit('import-json', e)" />
-              </label>
+                <q-file v-show="false" ref="importJsonBtn" accept="application/json"
+                  @update:model-value="(val) => { if (val) emit('import-json', { target: { files: [val] } }) }" />
+              </q-btn>
 
-              <button @click="emit('save-state')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Guardar estat a l'URL
-              </button>
+              <q-btn :disable="!isAdminMode" outline color="secondary" @click="emit('save-state')" label="Guardar a URL"
+                icon="link" />
+              <q-btn :disable="!isAdminMode" outline color="secondary" @click="emit('load-state')"
+                label="Carregar d'URL" icon="sync" />
+              <q-btn :disable="!isAdminMode" outline color="secondary" @click="emit('copy-link')" label="Copiar enllaç"
+                icon="content_copy" />
 
-              <button @click="emit('load-state')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Carregar estat de l'URL
-              </button>
-
-              <button @click="emit('copy-link')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Copiar enllaç
-              </button>
-
-              <button @click="emit('apply-supabase-template')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Aplicar plantilla
-              </button>
-
-              <button @click="emit('explain-template-use')" :disabled="!isAdminMode"
-                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
-                Com funciona
-              </button>
-
-              <button @click="emit('export-gef-excel')"
-                class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
-                Exportar Excel GEF
-              </button>
+              <q-btn :disable="!isAdminMode" outline color="accent" @click="emit('apply-supabase-template')"
+                label="Aplicar plantilla" />
+              <q-btn :disable="!isAdminMode" flat color="info" @click="emit('explain-template-use')"
+                label="Com funciona" icon="help_outline" />
+              <q-btn outline color="secondary" @click="emit('export-gef-excel')" label="Exportar Excel GEF" />
 
             </div>
-          </div>
+          </q-card>
         </div>
-      </div>
+      </q-card>
     </div>
 
-
-    <p class="text-xs text-gray-600 mt-4">
+    <div class="q-mt-md">
       Assignatures disponibles a la safata:
-      <strong>{{ availableCount }}</strong> (de {{ totalSubjects }}). Assignades al
-      calendari (tots períodes): <strong>{{ assignedCount }}</strong>.
-    </p>
+      <span class="text-weight-bold">{{ availableCount }}</span> (de {{ totalSubjects }}). Assignades al
+      calendari (tots períodes): <span class="text-weight-bold">{{ assignedCount }}</span>.
+    </div>
 
-    <div v-if="lastDeleted"
-      class="mt-3 p-2 bg-yellow-50 border border-yellow-300 rounded-xl text-xs flex items-center justify-between gap-2">
-      <span>
-        Assignatura eliminada del catàleg:
-        <strong>
-          {{ lastDeleted.subject.sigles || lastDeleted.subject.codi }}
-        </strong>
+    <q-banner v-if="lastDeleted" inline-actions class="bg-warning text-dark q-mt-sm rounded-borders">
+      <template v-slot:avatar>
+        <q-icon name="warning" color="dark" />
+      </template>
+      Assignatura eliminada del catàleg:
+      <span class="text-weight-bold">
+        {{ lastDeleted.subject.sigles || lastDeleted.subject.codi }}
       </span>
-      <div class="flex gap-2">
-        <button @click="emit('undo-delete')" class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50">
-          Desfer
-        </button>
-        <button @click="emit('set-last-deleted', null)"
-          class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50">
-          Amaga
-        </button>
-      </div>
-    </div>
+      <template v-slot:action>
+        <q-btn flat color="dark" label="Desfer" @click="emit('undo-delete')" />
+        <q-btn flat color="dark" label="Amaga" @click="emit('set-last-deleted', null)" />
+      </template>
+    </q-banner>
 
-    <div class="mt-4 flex flex-wrap items-center gap-3">
+    <div class="q-mt-md flex flex-wrap items-center gap-2">
       <div class="flex flex-wrap gap-2">
-        <button v-for="p in periods" :key="p.id" @click="emit('set-active-pid', p.id)"
-          class="px-4 py-2 rounded-full border text-sm font-medium transition-colors" :class="[
-            p.id === activePid
-              ? 'bg-blue-600 text-white border-blue-700'
-              : 'bg-white hover:bg-gray-50'
-          ]">
-          {{ getPeriodLabel(p) }}
-        </button>
+        <q-btn v-for="p in periods" :key="p.id" @click="emit('set-active-pid', p.id)" :unelevated="p.id === activePid"
+          :outline="p.id !== activePid" :color="p.id === activePid ? 'primary' : 'grey-8'" :label="getPeriodLabel(p)" />
       </div>
     </div>
 
-    <div v-if="showPasswordDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      @click.self="cancelPassword">
-      <div class="bg-white rounded-2xl p-6 shadow-xl max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-4">🔐 Introdueix la contrasenya d'administrador</h3>
+    <q-dialog v-model="showPasswordDialog" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6"><q-icon name="lock" class="q-mr-sm" /> Introdueix contrasenya</div>
+        </q-card-section>
 
-        <input v-model="passwordInput" type="password" placeholder="Contrasenya"
-          class="w-full border rounded-xl p-3 mb-3" :class="passwordError ? 'border-red-500' : 'border-gray-300'"
-          @keyup.enter="submitPassword" autofocus />
+        <q-card-section class="q-pt-none">
+          <q-input dense v-model="passwordInput" type="password" autofocus @keyup.enter="submitPassword"
+            :error="passwordError" error-message="❌ Contrasenya incorrecta. Torna-ho a intentar."
+            label="Contrasenya d'administrador" />
+        </q-card-section>
 
-        <p v-if="passwordError" class="text-sm text-red-600 mb-3">
-          ❌ Contrasenya incorrecta. Torna-ho a intentar.
-        </p>
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel·lar" @click="cancelPassword" />
+          <q-btn color="primary" label="Desbloquejar" @click="submitPassword" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
 
-        <div class="flex gap-3 justify-end">
-          <button @click="cancelPassword" class="px-4 py-2 border rounded-xl hover:bg-gray-50">
-            Cancel·lar
-          </button>
-          <button @click="submitPassword" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
-            Desbloquejar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  </section>
 </template>
