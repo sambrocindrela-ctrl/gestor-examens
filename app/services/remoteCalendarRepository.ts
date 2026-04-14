@@ -1,44 +1,35 @@
-import { supabase } from "../lib/supabase";
 import type {
   CalendarRepository,
   CreateCalendarInput,
   UpdateCalendarInput,
 } from "../types/repository";
-import type { ExamPlannerDocument } from "../types/examPlanner";
 import type { CalendarSummary, SavedCalendar } from "../types/savedCalendar";
 
-type ExamCalendarsRow = {
+/**
+ * Backend Row Type (Snake Case)
+ */
+interface ExamCalendarBackendRow {
   id: string;
   name: string;
   academic_year: string | null;
   titulacio: string | null;
-  document_json: ExamPlannerDocument;
+  document_json: any;
   created_at: string;
   updated_at: string;
   created_by: string | null;
   updated_by: string | null;
-};
+}
 
-function mapRowToSavedCalendar(row: ExamCalendarsRow): SavedCalendar {
+/**
+ * Mappers
+ */
+function mapBackendToFrontend(row: ExamCalendarBackendRow): SavedCalendar {
   return {
     id: row.id,
     name: row.name,
     academicYear: row.academic_year ?? undefined,
     titulacio: row.titulacio ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    createdBy: row.created_by ?? undefined,
-    updatedBy: row.updated_by ?? undefined,
     document: row.document_json,
-  };
-}
-
-function mapRowToSummary(row: ExamCalendarsRow): CalendarSummary {
-  return {
-    id: row.id,
-    name: row.name,
-    academicYear: row.academic_year ?? undefined,
-    titulacio: row.titulacio ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: row.created_by ?? undefined,
@@ -46,125 +37,85 @@ function mapRowToSummary(row: ExamCalendarsRow): CalendarSummary {
   };
 }
 
+function mapFrontendToBackend(input: CreateCalendarInput | UpdateCalendarInput): Partial<ExamCalendarBackendRow> {
+  const data: any = {
+    name: input.name,
+    document_json: input.document,
+  };
+  
+  if (input.academicYear !== undefined) data.academic_year = input.academicYear;
+  if (input.titulacio !== undefined) data.titulacio = input.titulacio;
+  
+  return data;
+}
+
+/**
+ * Refactored repository to use the Django backend via Proxy.
+ */
 export const remoteCalendarRepository: CalendarRepository = {
-    async renameCalendar(id: string, newName: string): Promise<SavedCalendar> {
-    const { data, error } = await supabase
-      .from("exam_calendars")
-      .update({
-        name: newName,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select("id, name, academic_year, titulacio, document_json, created_at, updated_at, created_by, updated_by")
-      .single();
-
-    if (error || !data) {
-      throw new Error(
-        `No s'ha pogut reanomenar el calendari: ${error?.message ?? "error desconegut"}`
-      );
-    }
-
-    return mapRowToSavedCalendar(data as ExamCalendarsRow);
+  async renameCalendar(id: string, newName: string): Promise<SavedCalendar> {
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
+    
+    const response = await $authFetch<ExamCalendarBackendRow>(`${API_BASE}/calendars/${id}`, {
+      method: "PATCH",
+      body: { name: newName },
+    });
+    
+    return mapBackendToFrontend(response);
   },
   
   async listCalendars(titulacio?: string): Promise<CalendarSummary[]> {
-    let query = supabase
-      .from("exam_calendars")
-      .select(
-        "id, name, academic_year, titulacio, document_json, created_at, updated_at, created_by, updated_by"
-      )
-      .order("updated_at", { ascending: false });
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
 
-    if (titulacio && titulacio.trim()) {
-      query = query.eq("titulacio", titulacio.trim());
-    }
+    const response = await $authFetch<ExamCalendarBackendRow[]>(`${API_BASE}/calendars`, {
+      query: titulacio ? { titulacio } : {},
+    });
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`No s'han pogut carregar els calendaris: ${error.message}`);
-    }
-
-    return (data ?? []).map((row) => mapRowToSummary(row as ExamCalendarsRow));
+    return response.map(mapBackendToFrontend);
   },
-
 
   async getCalendar(id: string): Promise<SavedCalendar> {
-    const { data, error } = await supabase
-      .from("exam_calendars")
-      .select("id, name, academic_year, titulacio, document_json, created_at, updated_at, created_by, updated_by")
-      .eq("id", id)
-      .single();
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
 
-    if (error || !data) {
-      throw new Error(`No s'ha pogut carregar el calendari: ${error?.message ?? "no trobat"}`);
-    }
-
-    return mapRowToSavedCalendar(data as ExamCalendarsRow);
+    const response = await $authFetch<ExamCalendarBackendRow>(`${API_BASE}/calendars/${id}`);
+    
+    return mapBackendToFrontend(response);
   },
 
- async createCalendar(input: CreateCalendarInput): Promise<SavedCalendar> {
-    const payload = {
-      name: input.name,
-      academic_year: input.academicYear ?? null,
-      titulacio: input.titulacio ?? null,
-      document_json: input.document,
-    };
+  async createCalendar(input: CreateCalendarInput): Promise<SavedCalendar> {
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
 
-    const { data, error } = await supabase
-      .from("exam_calendars")
-      .insert(payload)
-      .select(
-        "id, name, academic_year, titulacio, document_json, created_at, updated_at, created_by, updated_by"
-      )
-      .single();
+    const response = await $authFetch<ExamCalendarBackendRow>(`${API_BASE}/calendars`, {
+      method: "POST",
+      body: mapFrontendToBackend(input),
+    });
 
-    if (error || !data) {
-      throw new Error(
-        `No s'ha pogut crear el calendari: ${error?.message ?? "error desconegut"}`
-      );
-    }
-
-    return mapRowToSavedCalendar(data as ExamCalendarsRow);
+    return mapBackendToFrontend(response);
   },
 
- async updateCalendar(input: UpdateCalendarInput): Promise<SavedCalendar> {
-    const payload = {
-      name: input.name,
-      academic_year: input.academicYear ?? null,
-      titulacio: input.titulacio ?? null,
-      document_json: input.document,
-      updated_at: new Date().toISOString(),
-    };
+  async updateCalendar(input: UpdateCalendarInput): Promise<SavedCalendar> {
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
 
-    const { data, error } = await supabase
-      .from("exam_calendars")
-      .update(payload)
-      .eq("id", input.id)
-      .select(
-        "id, name, academic_year, titulacio, document_json, created_at, updated_at, created_by, updated_by"
-      )
-      .single();
+    const response = await $authFetch<ExamCalendarBackendRow>(`${API_BASE}/calendars/${input.id}`, {
+      method: "PATCH",
+      body: mapFrontendToBackend(input),
+    });
 
-    if (error || !data) {
-      throw new Error(
-        `No s'ha pogut actualitzar el calendari: ${error?.message ?? "error desconegut"}`
-      );
-    }
-
-    return mapRowToSavedCalendar(data as ExamCalendarsRow);
+    return mapBackendToFrontend(response);
   },
-
 
   async deleteCalendar(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("exam_calendars")
-      .delete()
-      .eq("id", id);
+    const { API_BASE } = useAppConfig();
+    const { $authFetch } = useNuxtApp();
 
-    if (error) {
-      throw new Error(`No s'ha pogut eliminar el calendari: ${error.message}`);
-    }
+    await $authFetch(`${API_BASE}/calendars/${id}`, {
+      method: "DELETE",
+    });
   },
 
   async duplicateCalendar(id: string, newName: string): Promise<SavedCalendar> {
@@ -177,5 +128,4 @@ export const remoteCalendarRepository: CalendarRepository = {
       document: existing.document,
     });
   },
-
 };
