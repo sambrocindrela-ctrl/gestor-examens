@@ -7,6 +7,9 @@ export default defineNuxtConfig({
 
  vite: {
   plugins: [tailwindcss()],
+  server: {
+      allowedHosts: ["local.dev.upc.edu"],
+    },
  },
   runtimeConfig: {
     API_BASE_URL: process.env.API_BASE_URL,
