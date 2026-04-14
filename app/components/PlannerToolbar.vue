@@ -163,7 +163,7 @@ function handleImportExcel(event: Event) {
     </div>
 
     <div class="q-gutter-y-md">
-      <q-card flat bordered class="q-pa-md bg-primary-100">
+      <q-card flat bordered class=" bg-primary-100">
         <q-card-section>
           <div class="text-subtitle2 text-weight-bold text-grey-8 q-mb-sm">
             Calendaris guardats
@@ -281,7 +281,7 @@ function handleImportExcel(event: Event) {
       </q-card>
     </div>
 
-    <div class="q-mt-md">
+    <div class="q-mt-md dark:text-gray-400">
       Assignatures disponibles a la safata:
       <span class="text-weight-bold">{{ availableCount }}</span> (de {{ totalSubjects }}). Assignades al
       calendari (tots períodes): <span class="text-weight-bold">{{ assignedCount }}</span>.

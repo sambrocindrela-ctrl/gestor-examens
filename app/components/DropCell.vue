@@ -34,9 +34,12 @@ function onRemove(subjectId: string) {
 
 <template>
   <td
-    class="align-top min-w-[170px] border border-grey-3 dark:border-grey-9 transition-colors"
     :class="[
-      disabled ? 'bg-grey-2 text-grey-6 dark:bg-grey-10 dark:text-grey-8' : 'bg-white dark:bg-grey-9'
+      'align-top min-w-[170px] border transition-colors',
+      $q.dark.isActive ? 'border-grey-9' : 'border-grey-3',
+      disabled
+        ? ($q.dark.isActive ? 'bg-grey-10 text-grey-8' : 'bg-grey-2 text-grey-6')
+        : ($q.dark.isActive ? 'bg-grey-9' : 'bg-white')
     ]"
   >
     <ClientOnly>

@@ -124,46 +124,50 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
       <span class="text-sm text-gray-500">(dl–dv)</span>
     </div>
 
-    <div v-for="(week, wIdx) in weeks" :key="wIdx" class="mt-6">
-      <div class="flex items-center gap-3 mb-2">
-        <h6 class="font-semibold text-secondary">
+    <div v-for="(week, wIdx) in weeks" :key="wIdx" class="q-mb-xl">
+      <div class="flex items-center gap-sm q-mb-sm">
+        <q-icon name="calendar_view_week" size="sm" color="secondary" />
+        <h6 class="text-subtitle1 font-bold text-secondary q-ma-none">
           Setmana {{ format(week.mon, "dd/MM") }} — {{ format(week.fri, "dd/MM") }}
         </h6>
-        <span class="text-xs text-gray-500">(dl–dv)</span>
+        <q-badge outline color="secondary" label="dl–dv" class="q-ml-sm" />
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              <th class="border p-2 w-28 text-left">Franja</th>
-              <th v-for="i in 5" :key="i" class="border p-2 min-w-[170px] text-left">
-                <div class="font-semibold">
-                  {{ ["Dl/Mon", "Dt/Tu", "Dc/Wed", "Dj/Thu", "Dv/Fri"][i - 1] }}
-                </div>
-                <div class="text-xs text-gray-500">
-                  {{ fmtDM(addDays(week.mon, i - 1)) }}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(slot, slotIndex) in (slotsPerPeriod[activePid] ?? [])" :key="slotIndex">
-              <td class="border p-2 align-top font-medium whitespace-nowrap">
-                {{ slot.start }}-{{ slot.end }}
-              </td>
-              <DropCell v-for="i in 5" :key="i" :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
-                :pid="activePid" :dateIso="iso(addDays(week.mon, i - 1))" :slotIndex="slotIndex"
-                :disabled="isDisabledDay(addDays(week.mon, i - 1), activePeriod)"
-                :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)" :extrasForSubjects="getExtrasForSubjects(
-                  iso(addDays(week.mon, i - 1)),
-                  slotIndex,
-                  (assignedPerPeriod[activePid] ?? {})[cellKey(iso(addDays(week.mon, i - 1)), slotIndex)] ?? []
-                )" @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
-                @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)" />
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <q-markup-table :dark="$q.dark.isActive" flat bordered dense class="shadow-1 overflow-hidden" separator="cell">
+        <thead>
+          <tr :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'" class="border-b">
+            <th :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-left font-bold" style="width: 120px;">
+              <div class="q-pa-xs">Franja</div>
+            </th>
+            <th v-for="i in 5" :key="i" class="text-left font-bold" style="min-width: 180px;">
+              <div :class="$q.dark.isActive ? 'text-grey-5' : 'text-grey-6'" class="text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.5px;">
+                {{ ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres"][i - 1] }}
+              </div>
+              <div class="text-subtitle2 text-primary">
+                {{ fmtDM(addDays(week.mon, i - 1)) }}
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(slot, slotIndex) in (slotsPerPeriod[activePid] ?? [])" :key="slotIndex">
+            <td :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'" class="text-left align-top border-r">
+              <div :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-weight-bold q-mt-xs">
+                {{ slot.start }}<span class="text-weight-light text-grey-5"> – </span>{{ slot.end }}
+              </div>
+            </td>
+            <DropCell v-for="i in 5" :key="i" :id="`cell:${activePid}:${iso(addDays(week.mon, i - 1))}:${slotIndex}`"
+              :pid="activePid" :dateIso="iso(addDays(week.mon, i - 1))" :slotIndex="slotIndex"
+              :disabled="isDisabledDay(addDays(week.mon, i - 1), activePeriod)"
+              :assignedList="getAssignedList(iso(addDays(week.mon, i - 1)), slotIndex)" :extrasForSubjects="getExtrasForSubjects(
+                iso(addDays(week.mon, i - 1)),
+                slotIndex,
+                (assignedPerPeriod[activePid] ?? {})[cellKey(iso(addDays(week.mon, i - 1)), slotIndex)] ?? []
+              )" @remove-one="(sid: string) => onRemoveOne(iso(addDays(week.mon, i - 1)), slotIndex, sid)"
+              @update-list="(newList: Subject[]) => onUpdateList(iso(addDays(week.mon, i - 1)), slotIndex, newList)" />
+          </tr>
+        </tbody>
+      </q-markup-table>
     </div>
   </div>
 </template>

@@ -763,29 +763,31 @@ function handleExplainTemplateUse() {
 
 
       <!-- Configuració del període actiu (informació compacta) -->
-      <q-card v-if="activePeriod" class="q-pa-md" flat>
-        <q-card-section class=" flex flex-wrap items-center gap-6 text-lg">
+      <q-card v-if="activePeriod"
+        class="bg-primary-50 dark:bg-primary-950 shadow-1 border border-primary-100 dark:border-primary-900 q-mb-md">
+        <q-card-section class="flex flex-wrap items-center gap-6">
           <!-- Period info -->
-          <div class="flex items-center gap-2">
-            <span class="font-semibold text-primary">Període:</span>
-            <span class="px-3 py-1 font-medium text-secondary">
+          <div class="flex items-center gap-sm">
+            <q-icon name="event_available" color="primary" size="sm" />
+            <span class="text-subtitle1 text-weight-bold text-primary dark:text-primary-100">Període actiu:</span>
+            <q-chip color="primary" text-color="white" icon="flag" class="text-weight-bold">
               {{ activePeriod.tipus }} {{ activePeriod.curs || '—' }}-{{ activePeriod.quad || '—' }}
-            </span>
+            </q-chip>
           </div>
 
           <!-- Time slots info -->
           <div class="flex items-center gap-2">
-            <span class="font-semibold text-primary">Franges horàries:</span>
+            <q-icon name="schedule" color="secondary" size="sm" />
+            <span class="text-subtitle1 text-weight-bold text-secondary dark:text-secondary">Franges horàries:</span>
             <div class="flex flex-wrap gap-2">
-              <span v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i"
-                class="px-2 py-1 bg-secondary/50 rounded text-sm font-mono">
+              <q-chip v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i" color="secondary" outline
+                text-color="secondary" size="sm" class="text-weight-bold q-ma-none font-mono">
                 {{ s.start }}–{{ s.end }}
-              </span>
+              </q-chip>
             </div>
           </div>
         </q-card-section>
       </q-card>
-
     </div>
 
     <!-- Two-Column Layout with Independent Scrolling -->

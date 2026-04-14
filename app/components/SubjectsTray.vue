@@ -48,9 +48,14 @@ function clone(element: Subject) {
         </VueDraggable>
       </ClientOnly>
 
-      <div v-if="!availableSubjects.length" class="text-caption text-grey-6 text-italic q-mt-sm">
-        No hi ha assignatures per al curs/quadrimestre i període
-        d’aquest calendari, o ja estan totes programades/ocultes.
+      <div v-if="!availableSubjects.length" class="flex flex-col items-center justify-center q-py-xl opacity-70">
+        <q-icon name="all_inbox" size="4rem" color="grey-4" class="q-mb-md" />
+        <div class="text-subtitle1 text-weight-medium text-grey-6 text-center">
+          Totes les assignatures programades
+        </div>
+        <div class="text-caption text-grey-5 text-center mt-1" style="max-width: 250px;">
+          No hi ha més assignatures pel període actiu o bé estan totes ocultes.
+        </div>
       </div>
     </q-card-section>
   </q-card>

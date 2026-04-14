@@ -26,12 +26,19 @@ function onAdd() {
   <div class="fixed bottom-6 right-6 z-50">
     <ClientOnly>
       <VueDraggable v-model="trashList" group="subjects" @add="onAdd"
-        class="flex items-center gap-2 px-4 py-3 border border-warning bg-warning/10 border-dashed shadow-md transition-colors"
+        class="rounded-full shadow-4 hover:shadow-6 transition-all duration-300"
         ghost-class="hidden">
-        <span class="text-sm ">🗑️ Paperera</span>
-        <span class="text-xs text-gray-400">
-          Arrossega aquí per eliminar
-        </span>
+        
+        <q-card class="bg-red-1 dark:bg-red-10 border border-red-3 dark:border-red-9 rounded-borders" flat style="border-radius: 9999px;">
+          <div class="q-px-lg q-py-sm flex items-center q-gutter-x-sm cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+            <q-icon name="delete_outline" size="sm" color="negative" />
+            <div class="column">
+              <span class="text-subtitle2 text-weight-bold text-negative leading-none">Paperera</span>
+              <span class="text-caption text-negative opacity-70 leading-none">Arrossega aquí</span>
+            </div>
+          </div>
+        </q-card>
+
       </VueDraggable>
     </ClientOnly>
   </div>
