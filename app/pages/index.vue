@@ -15,7 +15,7 @@ import {
 } from "@/utils/exporters";
 
 import { exportGEFExcelFromTemplate } from "@/utils/exportGEFExcel";
-  
+
 import type { ImportedCalendarData } from "@/utils/importExcelCalendar";
 import type { Subject, AssignedMap } from "@/types/examPlanner";
 import type { CalendarSummary } from "@/types/savedCalendar";
@@ -44,7 +44,7 @@ const {
   lastDeleted,
 
   getSnapshot,
-  
+
   addPeriod,
   removePeriod,
   deleteSubjectPermanently,
@@ -55,8 +55,9 @@ const {
 } = useExamPlannerState();
 
 /* --- Admin Mode / Password Protection --- */
+const configRT = useRuntimeConfig();
+const ADMIN_PASSWORD = configRT.public.adminPassword;
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const isAdminMode = ref(false);
 const savedCalendars = ref<CalendarSummary[]>([]);
 const selectedCalendarId = ref("");
@@ -165,25 +166,25 @@ function handleRemoveOneFromCell(pid: number, dateIso: string, slotIndex: number
   const key = cellKey(dateIso, slotIndex);
   const prevMap = assignedPerPeriod.value[pid] ?? {};
   const next = (prevMap[key] ?? []).filter((id) => id !== subjectId);
-  
+
   const copy: AssignedMap = { ...prevMap };
   if (next.length) copy[key] = next;
   else delete copy[key];
-  
+
   assignedPerPeriod.value = { ...assignedPerPeriod.value, [pid]: copy };
 }
 
 function handleUpdateCellList(pid: number, dateIso: string, slotIndex: number, newList: Subject[]) {
   const key = cellKey(dateIso, slotIndex);
   const prevMap = assignedPerPeriod.value[pid] ?? {};
-  
+
   const copy: AssignedMap = { ...prevMap };
   if (newList.length) {
     copy[key] = newList.map(s => s.id);
   } else {
     delete copy[key];
   }
-  
+
   assignedPerPeriod.value = { ...assignedPerPeriod.value, [pid]: copy };
 }
 
@@ -225,7 +226,7 @@ const handleExportExcel = () =>
     roomsData: roomsData.value,
   });
 
-  const handleExportGEFExcel = async () => {
+const handleExportGEFExcel = async () => {
   await exportGEFExcelFromTemplate({
     periods: periods.value,
     slotsPerPeriod: slotsPerPeriod.value,
@@ -435,7 +436,7 @@ function refreshBaselineFromCurrent() {
 function hasUnsavedChanges() {
   return getCurrentDocumentJson() !== lastSavedOrLoadedDocumentJson.value;
 }
-  
+
 async function maybeSaveBeforeChangingCalendar() {
   if (!hasUnsavedChanges()) return true;
 
@@ -479,9 +480,9 @@ async function handleSelectedCalendarChange(id: string) {
   try {
     await performLoadSupabaseCalendar(id);
   } catch (err) {
-    console.error("Error carregant calendari de Supabase:", err);
+    console.error("Error carregant calendari:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error carregant calendari de Supabase:\n\n${message}`);
+    alert(`Error carregant calendari:\n\n${message}`);
   }
 }
 
@@ -521,9 +522,9 @@ async function handleSaveSupabaseWithName() {
     alert(`Calendari guardat: ${saved.name}`);
     return saved;
   } catch (err) {
-    console.error("Error guardant a Supabase:", err);
+    console.error("Error guardant:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error guardant a Supabase:\n\n${message}`);
+    alert(`Error guardant:\n\n${message}`);
     return null;
   }
 }
@@ -541,12 +542,12 @@ async function handleListSupabaseCalendars(silent = false) {
     }
 
     if (!silent) {
-      alert(`S'han carregat ${list.length} calendaris de Supabase.`);
+      alert(`S'han carregat ${list.length} calendaris.`);
     }
 
     return list;
   } catch (err) {
-    console.error("Error llistant calendaris de Supabase:", err);
+    console.error("Error llistant calendaris:", err);
     const message = err instanceof Error ? err.message : String(err);
     alert(`Error llistant calendaris de Supabase:\n\n${message}`);
     return [];
@@ -561,7 +562,7 @@ async function handleSetSelectedTitulacio(value: string) {
   await handleListSupabaseCalendars(true);
 }
 
-  async function handleRenameSelectedSupabaseCalendar() {
+async function handleRenameSelectedSupabaseCalendar() {
   if (!selectedCalendarId.value) {
     alert("No hi ha cap calendari seleccionat.");
     return;
@@ -588,35 +589,35 @@ async function handleSetSelectedTitulacio(value: string) {
     savedCalendars.value = savedCalendars.value.map((cal) =>
       cal.id === updated.id
         ? {
-            ...cal,
-            name: updated.name,
-            updatedAt: updated.updatedAt,
-          }
+          ...cal,
+          name: updated.name,
+          updatedAt: updated.updatedAt,
+        }
         : cal
     );
 
     alert(`Calendari reanomenat: ${updated.name}`);
   } catch (err) {
-    console.error("Error reanomenant calendari de Supabase:", err);
+    console.error("Error reanomenant calendari:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error reanomenant calendari de Supabase:\n\n${message}`);
+    alert(`Error reanomenant calendari:\n\n${message}`);
   }
 }
 
 async function handleLoadSupabaseCalendar(id: string) {
- if (!id) {
-   alert("No hi ha cap calendari seleccionat.");
-   return;
- }
+  if (!id) {
+    alert("No hi ha cap calendari seleccionat.");
+    return;
+  }
 
- try {
-   const saved = await performLoadSupabaseCalendar(id);
-   alert(`Calendari carregat de Supabase: ${saved.name}`);
- } catch (err) {
-   console.error("Error carregant calendari de Supabase:", err);
-   const message = err instanceof Error ? err.message : String(err);
-   alert(`Error carregant calendari de Supabase:\n\n${message}`);
- }
+  try {
+    const saved = await performLoadSupabaseCalendar(id);
+    alert(`Calendari carregat: ${saved.name}`);
+  } catch (err) {
+    console.error("Error carregant calendari:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    alert(`Error carregant calendari:\n\n${message}`);
+  }
 }
 
 
@@ -625,7 +626,7 @@ async function handleLoadLatestSupabaseCalendar() {
     const list = await remoteCalendarRepository.listCalendars(selectedTitulacio.value || undefined);
 
     if (!list.length) {
-      alert("No hi ha calendaris guardats a Supabase.");
+      alert("No hi ha calendaris guardats.");
       return;
     }
 
@@ -634,9 +635,9 @@ async function handleLoadLatestSupabaseCalendar() {
 
     await handleLoadSupabaseCalendar(list[0].id);
   } catch (err) {
-    console.error("Error carregant l'últim calendari de Supabase:", err);
+    console.error("Error carregant l'últim calendari:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error carregant l'últim calendari de Supabase:\n\n${message}`);
+    alert(`Error carregant l'últim calendari:\n\n${message}`);
   }
 }
 
@@ -652,7 +653,7 @@ async function handleDeleteSelectedSupabaseCalendar() {
 
   const label = selected?.name ?? selectedCalendarId.value;
 
-    // 🔒 Protección de calendarios BASE_ y DEF_
+  // 🔒 Protección de calendarios BASE_ y DEF_
   if (selected) {
     const prefixesProtegits = ["BASE_", "DEF_"];
     const name = selected.name.toUpperCase();
@@ -676,13 +677,13 @@ async function handleDeleteSelectedSupabaseCalendar() {
 
     selectedCalendarId.value = "";
 
-    alert("Calendari eliminat de Supabase.");
+    alert("Calendari eliminat.");
   } catch (err) {
-    console.error("Error eliminant calendari de Supabase:", err);
+    console.error("Error eliminant calendari:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error eliminant calendari de Supabase:\n\n${message}`);
+    alert(`Error eliminant calendari:\n\n${message}`);
   }
-}  
+}
 
 async function handleApplySupabaseTemplateToCurrentCalendar() {
   if (!selectedCalendarId.value) {
@@ -715,76 +716,50 @@ async function handleApplySupabaseTemplateToCurrentCalendar() {
       `S'ha aplicat la plantilla del calendari: ${templateSaved.name}`
     );
   } catch (err) {
-    console.error("Error aplicant plantilla de Supabase:", err);
+    console.error("Error aplicant plantilla:", err);
     const message = err instanceof Error ? err.message : String(err);
-    alert(`Error aplicant plantilla de Supabase:\n\n${message}`);
+    alert(`Error aplicant plantilla:\n\n${message}`);
   }
 }
 
 function handleExplainTemplateUse() {
   alert(
-    "Aquesta acció aplica al calendari actual la disposició d'un calendari guardat a Supabase.\n\n" +
+    "Aquesta acció aplica al calendari actual la disposició d'un calendari guardat.\n\n" +
     "Flux recomanat:\n" +
     "1. Importa o fes MERGE del CSV nou.\n" +
-    "2. Llista i selecciona un calendari anterior de Supabase.\n" +
+    "2. Llista i selecciona un calendari anterior.\n" +
     "3. Prem 'Aplicar plantilla'.\n\n" +
     "Les assignatures s'emparellen per CODI."
   );
 }
-  
+
 </script>
 
 <template>
   <div class="flex flex-col h-screen font-sans text-gray-900">
     <!-- Header Section (Fixed) -->
     <div class="flex-shrink-0 p-6 border-b bg-white">
-      <h1 class="text-2xl font-bold mb-2">
-        Planificador d'exàmens — períodes amb curs/quadrimestre
-      </h1>
 
-      <PlannerToolbar
-  :availableSubjects="availableSubjects"
-  :subjects="subjects"
-  :lastDeleted="lastDeleted"
-  :periods="periods"
-  :activePid="activePid"
-  :isAdminMode="isAdminMode"
-  :savedCalendars="savedCalendars"
-  :selectedCalendarId="selectedCalendarId"
-  :selectedTitulacio="selectedTitulacio"
-  :titulacionsDisponibles="titulacionsDisponibles"
-  :isTitulacioLocked="isTitulacioLocked"
-  @undo-delete="undoDelete"
-  @set-last-deleted="(val) => (lastDeleted = val)"
-  @set-active-pid="(id) => (activePid = id)"
-  @set-selected-calendar-id="handleSelectedCalendarChange"
-  @set-selected-titulacio="handleSetSelectedTitulacio"
-  @add-period="addPeriod"
-  @remove-period="removePeriod"
-  @import-csv="handleImportCSV"
-  @merge-subjects-csv="handleMergeSubjectsCSV"
-  @import-rooms-csv="handleImportRoomsCSV"
-  @import-calendar-data="handleImportExcelCalendar"
-  @export-csv="handleExportCSV"
-  @export-txt="handleExportTXT"
-  @export-excel="handleExportExcel"
-  @export-gef-excel="handleExportGEFExcel"
-  @export-word="handleExportWord"
-  @export-json="handleExportJSON"
-  @import-json="importJSON"
-  @save-state="saveStateToUrl"
-  @load-state="loadStateFromUrl"
-  @copy-link="copyLinkToClipboard"
-  @save-supabase="handleSaveSupabaseWithName"
-  @list-supabase-calendars="handleListSupabaseCalendars"
-  @load-latest-supabase-calendar="handleLoadLatestSupabaseCalendar"
-  @load-selected-supabase-calendar="handleLoadSupabaseCalendar"
-  @rename-selected-supabase-calendar="handleRenameSelectedSupabaseCalendar"
-  @delete-selected-supabase-calendar="handleDeleteSelectedSupabaseCalendar"
-  @apply-supabase-template="handleApplySupabaseTemplateToCurrentCalendar"
-  @explain-template-use="handleExplainTemplateUse"
-  @toggle-admin-mode="toggleAdminMode"
-/>
+      <PlannerToolbar :availableSubjects="availableSubjects" :subjects="subjects" :lastDeleted="lastDeleted"
+        :periods="periods" :activePid="activePid" :isAdminMode="isAdminMode" :savedCalendars="savedCalendars"
+        :selectedCalendarId="selectedCalendarId" :selectedTitulacio="selectedTitulacio"
+        :titulacionsDisponibles="titulacionsDisponibles" :isTitulacioLocked="isTitulacioLocked"
+        @undo-delete="undoDelete" @set-last-deleted="(val) => (lastDeleted = val)"
+        @set-active-pid="(id) => (activePid = id)" @set-selected-calendar-id="handleSelectedCalendarChange"
+        @set-selected-titulacio="handleSetSelectedTitulacio" @add-period="addPeriod" @remove-period="removePeriod"
+        @import-csv="handleImportCSV" @merge-subjects-csv="handleMergeSubjectsCSV"
+        @import-rooms-csv="handleImportRoomsCSV" @import-calendar-data="handleImportExcelCalendar"
+        @export-csv="handleExportCSV" @export-txt="handleExportTXT" @export-excel="handleExportExcel"
+        @export-gef-excel="handleExportGEFExcel" @export-word="handleExportWord" @export-json="handleExportJSON"
+        @import-json="importJSON" @save-state="saveStateToUrl" @load-state="loadStateFromUrl"
+        @copy-link="copyLinkToClipboard" @save-supabase="handleSaveSupabaseWithName"
+        @list-supabase-calendars="handleListSupabaseCalendars"
+        @load-latest-supabase-calendar="handleLoadLatestSupabaseCalendar"
+        @load-selected-supabase-calendar="handleLoadSupabaseCalendar"
+        @rename-selected-supabase-calendar="handleRenameSelectedSupabaseCalendar"
+        @delete-selected-supabase-calendar="handleDeleteSelectedSupabaseCalendar"
+        @apply-supabase-template="handleApplySupabaseTemplateToCurrentCalendar"
+        @explain-template-use="handleExplainTemplateUse" @toggle-admin-mode="toggleAdminMode" />
 
 
       <!-- Configuració del període actiu (informació compacta) -->
@@ -802,11 +777,8 @@ function handleExplainTemplateUse() {
           <div class="flex items-center gap-2">
             <span class="font-semibold text-gray-700">Franges horàries:</span>
             <div class="flex flex-wrap gap-2">
-              <span
-                v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])"
-                :key="i"
-                class="px-2 py-1 bg-gray-100 rounded text-sm font-mono"
-              >
+              <span v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i"
+                class="px-2 py-1 bg-gray-100 rounded text-sm font-mono">
                 {{ s.start }}–{{ s.end }}
               </span>
             </div>
@@ -820,27 +792,16 @@ function handleExplainTemplateUse() {
     <div class="flex-1 flex overflow-hidden">
       <!-- Left Column: Subjects Tray -->
       <div class="w-1/3 border-r bg-gray-50 overflow-y-auto p-6">
-        <SubjectsTray
-          :availableSubjects="availableSubjects"
-          :subjects="subjects"
-          :hiddenSubjectIds="hiddenSubjectIds"
-          @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)"
-        />
+        <SubjectsTray :availableSubjects="availableSubjects" :subjects="subjects" :hiddenSubjectIds="hiddenSubjectIds"
+          @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" />
       </div>
 
       <!-- Right Column: Calendar -->
       <div class="flex-1 overflow-y-auto p-6 bg-white">
-        <ExamCalendarGrid
-          v-if="activePeriod"
-          :activePeriod="activePeriod"
-          :activePid="activePid"
-          :slotsPerPeriod="slotsPerPeriod"
-          :assignedPerPeriod="assignedPerPeriod"
-          :subjects="subjects"
-          :roomsData="roomsData"
-          @remove-one-from-cell="handleRemoveOneFromCell"
-          @update-cell-list="handleUpdateCellList"
-        />
+        <ExamCalendarGrid v-if="activePeriod" :activePeriod="activePeriod" :activePid="activePid"
+          :slotsPerPeriod="slotsPerPeriod" :assignedPerPeriod="assignedPerPeriod" :subjects="subjects"
+          :roomsData="roomsData" @remove-one-from-cell="handleRemoveOneFromCell"
+          @update-cell-list="handleUpdateCellList" />
       </div>
     </div>
 

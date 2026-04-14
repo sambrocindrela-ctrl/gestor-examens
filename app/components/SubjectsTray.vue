@@ -38,21 +38,12 @@ function clone(element: Subject) {
 <template>
   <!-- Safata d'assignatures -->
   <div class="p-4 rounded-2xl border shadow-sm bg-white mb-3">
-    <h2 class="font-semibold mb-3">Assignatures (arrossega)</h2>
+    <h5 class="text-2xl font-semibold mb-3">Assignatures (arrossega)</h5>
 
     <ClientOnly>
-      <VueDraggable
-        v-model="list"
-        :group="{ name: 'subjects', pull: 'clone', put: false }"
-        :clone="clone"
-        :sort="false"
-        class="flex flex-wrap gap-2 min-h-[50px]"
-      >
-      <TrayChip
-        v-for="s in list"
-        :key="s.id"
-        :s="s"
-      />
+      <VueDraggable v-model="list" :group="{ name: 'subjects', pull: 'clone', put: false }" :clone="clone" :sort="false"
+        class="flex flex-wrap gap-2 min-h-[50px]">
+        <TrayChip v-for="s in list" :key="s.id" :s="s" />
       </VueDraggable>
     </ClientOnly>
 
@@ -68,27 +59,18 @@ function clone(element: Subject) {
       Assignatures eliminades de la safata
     </div>
     <div class="flex flex-wrap gap-2">
-      <span
-        v-for="id in hiddenSubjectIds"
-        :key="id"
-        class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border bg-white"
-      >
+      <span v-for="id in hiddenSubjectIds" :key="id"
+        class="inline-flex items-center gap-2 px-2 py-1 rounded-lg border bg-white">
         <template v-if="subjects.find(x => x.id === id)">
-          {{ subjects.find(x => x.id === id)?.sigles || subjects.find(x => x.id === id)?.codi }}
-          <button
-            class="text-xs px-2 py-0.5 border rounded-md hover:bg-gray-50"
-            @click="restore(id)"
-            title="Restaurar a la safata"
-          >
+          {{subjects.find(x => x.id === id)?.sigles || subjects.find(x => x.id === id)?.codi}}
+          <button class="text-xs px-2 py-0.5 border rounded-md hover:bg-gray-50" @click="restore(id)"
+            title="Restaurar a la safata">
             Restaurar
           </button>
         </template>
       </span>
-      <button
-        class="ml-2 text-xs px-2 py-0.5 border rounded-md bg-white hover:bg-gray-50"
-        @click="restoreAll"
-        title="Restaurar totes"
-      >
+      <button class="ml-2 text-xs px-2 py-0.5 border rounded-md bg-white hover:bg-gray-50" @click="restoreAll"
+        title="Restaurar totes">
         Restaurar totes
       </button>
     </div>

@@ -32,7 +32,7 @@ const emit = defineEmits<{
   (e: 'import-rooms-csv', event: Event): void;
   (e: 'import-json', event: Event): void;
   (e: 'import-calendar-data', data: ImportedCalendarData): void;
-  
+
   (e: 'export-csv'): void;
   (e: 'export-txt'): void;
   (e: 'export-excel'): void;
@@ -71,7 +71,7 @@ function getPeriodLabel(p: Period) {
   const tipus = p.tipus === "FINAL" ? "FINAL" : p.tipus === "REAVALUACIÓ" ? "REAVALUACIÓ" : "PARCIAL";
   const curs = p.curs ?? '';
   const quad = p.quad ?? '';
-  
+
   // Build label: TIPUS CURS-QUADRIMESTRE
   let label = tipus;
   if (curs) {
@@ -82,7 +82,7 @@ function getPeriodLabel(p: Period) {
   } else if (quad) {
     label += ` -${quad}`;
   }
-  
+
   return label;
 }
 
@@ -95,7 +95,7 @@ function attemptUnlock() {
 function submitPassword() {
   const wasLocked = !props.isAdminMode;
   emit('toggle-admin-mode', passwordInput.value);
-  
+
   // Use nextTick to check if unlock was successful after the parent updates
   setTimeout(() => {
     if (wasLocked && props.isAdminMode) {
@@ -146,309 +146,206 @@ function handleImportExcel(event: Event) {
 </script>
 
 <template>
-<div class="p-4 rounded-2xl border shadow-sm bg-white mb-6">
-  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-    <h2 class="font-semibold">Gestió del calendari</h2>
+  <div class="p-4  mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h4 class="text-2xl font-semibold text-primary">Gestió del calendari</h4>
 
-    <div class="flex items-center gap-2">
-      <button
-        @click="toggleAdvancedPanel"
-        :disabled="!isAdminMode"
-        class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-        :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-      >
-        ⚙ Accions avançades
-        <span v-if="isAdminMode">
-          {{ showAdvancedPanel ? "▲" : "▼" }}
-        </span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button @click="toggleAdvancedPanel" :disabled="!isAdminMode"
+          class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+          :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+          ⚙ Accions avançades
+          <span v-if="isAdminMode">
+            {{ showAdvancedPanel ? "▲" : "▼" }}
+          </span>
+        </button>
 
-      <button
-        v-if="!isAdminMode"
-        @click="attemptUnlock"
-        class="px-3 py-2 text-sm border rounded-xl bg-yellow-50 hover:bg-yellow-100 border-yellow-300 font-medium"
-      >
-        🔓 Desbloquejar
-      </button>
+        <button v-if="!isAdminMode" @click="attemptUnlock"
+          class="px-3 py-2 text-sm border rounded-xl bg-yellow-50 hover:bg-yellow-100 border-yellow-300 font-medium">
+          🔓 Desbloquejar
+        </button>
 
-      <button
-        v-else
-        @click="lockAdmin"
-        class="px-3 py-2 text-sm border rounded-xl bg-green-50 hover:bg-green-100 border-green-300 font-medium"
-      >
-        🔒 Bloquejar
-      </button>
-    </div>
-  </div>
-
-  <div class="space-y-4">
-    <div class="border rounded-xl p-3 bg-emerald-50">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">
-        ☁️ Calendaris guardats a Supabase
-      </h3>
-
-      <div class="flex flex-wrap gap-3 items-center">
-        <select
-  :value="selectedTitulacio"
-  :disabled="props.isTitulacioLocked"
-  @change="emit('set-selected-titulacio', ($event.target as HTMLSelectElement).value)"
-  class="px-3 py-2 border rounded bg-white min-w-[220px]"
-  :class="props.isTitulacioLocked ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''"
->
-  <option value="">Totes les titulacions</option>
-  <option
-    v-for="tit in titulacionsDisponibles"
-    :key="tit"
-    :value="tit"
-  >
-    {{ tit }}
-  </option>
-</select>
-
-<span
-  v-if="props.isTitulacioLocked"
-  class="text-xs text-gray-600"
->
-  Titulació fixada per l'enllaç
-</span>
-
-<select
-  :value="selectedCalendarId"
-  @change="emit('set-selected-calendar-id', ($event.target as HTMLSelectElement).value)"
-  class="px-3 py-2 border rounded bg-white min-w-[320px]"
->
-  <option value="">Selecciona un calendari</option>
-<option
-  v-for="cal in savedCalendars"
-  :key="cal.id"
-  :value="cal.id"
->
-  {{ cal.name }}
-</option>
-</select>
-
-  <button
-    @click="emit('load-latest-supabase-calendar')"
-    class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
-  >
-    Carregar últim
-  </button>
-  
-<button
-  @click="emit('save-supabase')"
-  class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
->
-  Guardar a Supabase
-</button>
-
-<button
-  @click="emit('rename-selected-supabase-calendar')"
-  class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
->
-  Reanomenar seleccionat
-</button>
-
-<button
-  @click="emit('delete-selected-supabase-calendar')"
-  class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
->
-  Eliminar seleccionat
-</button>
-        
- <button
-  @click="emit('export-excel')"
-  class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
->
-  Exportar calendari en Excel
-</button>
-
-<button
-  @click="emit('export-word')"
-  class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
->
-  Exportar calendari en Word
-</button>     
-        
+        <button v-else @click="lockAdmin"
+          class="px-3 py-2 text-sm border rounded-xl bg-green-50 hover:bg-green-100 border-green-300 font-medium">
+          🔒 Bloquejar
+        </button>
       </div>
     </div>
 
-    <div
-      v-if="showAdvancedPanel"
-      class="border rounded-xl p-3 bg-gray-50"
-    >
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">
-        ⚙ Accions avançades
-      </h3>
+    <div class="space-y-4">
+      <div class="border rounded-xl p-3 bg-primary-50">
+        <h5 class="text-sm font-semibold text-gray-700 mb-3">
+          Calendaris guardats
+        </h5>
 
-      <div class="space-y-4">
-        <div class="border rounded-xl p-3 bg-gray-50">
-          <h4 class="text-sm font-semibold text-gray-700 mb-3">
-            🔒 Administració d'importació i exportació tècnica
-          </h4>
-          
-          <p class="text-sm text-gray-600 mb-3">
-  CSV esperat (assignatures/períodes):
-  <code class="bg-gray-100 px-1 rounded">
+        <div class="flex flex-wrap gap-3 items-center">
+          <select :value="selectedTitulacio" :disabled="props.isTitulacioLocked"
+            @change="emit('set-selected-titulacio', ($event.target as HTMLSelectElement).value)"
+            class="px-3 py-2 border rounded bg-white min-w-[220px]"
+            :class="props.isTitulacioLocked ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''">
+            <option value="">Totes les titulacions</option>
+            <option v-for="tit in titulacionsDisponibles" :key="tit" :value="tit">
+              {{ tit }}
+            </option>
+          </select>
+
+          <span v-if="props.isTitulacioLocked" class="text-xs text-gray-600">
+            Titulació fixada per l'enllaç
+          </span>
+
+          <select :value="selectedCalendarId"
+            @change="emit('set-selected-calendar-id', ($event.target as HTMLSelectElement).value)"
+            class="px-3 py-2 border rounded bg-white min-w-[320px]">
+            <option value="">Selecciona un calendari</option>
+            <option v-for="cal in savedCalendars" :key="cal.id" :value="cal.id">
+              {{ cal.name }}
+            </option>
+          </select>
+
+          <button @click="emit('load-latest-supabase-calendar')"
+            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Carregar últim
+          </button>
+
+          <button @click="emit('save-supabase')"
+            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Guardar
+          </button>
+
+          <button @click="emit('rename-selected-supabase-calendar')"
+            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Reanomenar seleccionat
+          </button>
+
+          <button @click="emit('delete-selected-supabase-calendar')"
+            class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Eliminar seleccionat
+          </button>
+
+          <button @click="emit('export-excel')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Exportar calendari en Excel
+          </button>
+
+          <button @click="emit('export-word')" class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+            Exportar calendari en Word
+          </button>
+
+        </div>
+      </div>
+
+      <div v-if="showAdvancedPanel" class="border rounded-xl p-3 bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">
+          ⚙ Accions avançades
+        </h3>
+
+        <div class="space-y-4">
+          <div class="border rounded-xl p-3 bg-gray-50">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">
+              🔒 Administració d'importació i exportació tècnica
+            </h4>
+
+            <p class="text-sm text-gray-600 mb-3">
+              CSV esperat (assignatures/períodes):
+              <code class="bg-gray-100 px-1 rounded">
     codi,sigles,nivell,curs,quadrimestre,period_id,period_tipus,period_inici,period_fi,period_slots,period_blackouts
   </code>
-  . Opcional: <code class="bg-gray-100 px-1 rounded">MET,MATT,MEE,MCYBERS</code>.
-</p>
+              . Opcional: <code class="bg-gray-100 px-1 rounded">MET,MATT,MEE,MCYBERS</code>.
+            </p>
 
-          <div class="flex flex-wrap gap-3 items-center">
-            <label 
-              class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Importar CSV (REEMPLAÇA)
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                class="hidden"
-                :disabled="!isAdminMode"
-                @change="(e) => emit('import-csv', e)"
-              />
-            </label>
+            <div class="flex flex-wrap gap-3 items-center">
+              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Importar CSV (REEMPLAÇA)
+                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
+                  @change="(e) => emit('import-csv', e)" />
+              </label>
 
-            <label 
-              class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Afegir assignatures (CSV) — MERGE
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                class="hidden"
-                :disabled="!isAdminMode"
-                @change="(e) => emit('merge-subjects-csv', e)"
-              />
-            </label>
+              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Afegir assignatures (CSV) — MERGE
+                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
+                  @change="(e) => emit('merge-subjects-csv', e)" />
+              </label>
 
-            <label 
-              class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Importar Aules/Matriculats (CSV)
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                class="hidden"
-                :disabled="!isAdminMode"
-                @change="(e) => emit('import-rooms-csv', e)"
-              />
-            </label>
+              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Importar Aules/Matriculats (CSV)
+                <input type="file" accept=".csv,text/csv" class="hidden" :disabled="!isAdminMode"
+                  @change="(e) => emit('import-rooms-csv', e)" />
+              </label>
 
-            <label 
-              class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Importar calendari en Excel
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                class="hidden"
-                :disabled="!isAdminMode"
-                @change="handleImportExcel"
-              />
-            </label>
+              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Importar calendari en Excel
+                <input type="file" accept=".xlsx, .xls" class="hidden" :disabled="!isAdminMode"
+                  @change="handleImportExcel" />
+              </label>
 
-            <button 
-              @click="emit('export-csv')" 
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Exportar CSV
-            </button>
+              <button @click="emit('export-csv')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Exportar CSV
+              </button>
 
-            <button 
-              @click="emit('export-txt')" 
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Exportar TXT
-            </button>
+              <button @click="emit('export-txt')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Exportar TXT
+              </button>
 
-            <button
-              @click="emit('export-json')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Exportar JSON
-            </button>
+              <button @click="emit('export-json')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Exportar JSON
+              </button>
 
-            <label
-              class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Importar JSON
-              <input
-                type="file"
-                accept="application/json"
-                class="hidden"
-                :disabled="!isAdminMode"
-                @change="(e) => emit('import-json', e)"
-              />
-            </label>
+              <label class="px-3 py-2 border rounded-xl shadow-sm cursor-pointer transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Importar JSON
+                <input type="file" accept="application/json" class="hidden" :disabled="!isAdminMode"
+                  @change="(e) => emit('import-json', e)" />
+              </label>
 
-            <button
-              @click="emit('save-state')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Guardar estat a l'URL
-            </button>
+              <button @click="emit('save-state')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Guardar estat a l'URL
+              </button>
 
-            <button
-              @click="emit('load-state')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Carregar estat de l'URL
-            </button>
+              <button @click="emit('load-state')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Carregar estat de l'URL
+              </button>
 
-            <button
-              @click="emit('copy-link')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Copiar enllaç
-            </button>
+              <button @click="emit('copy-link')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Copiar enllaç
+              </button>
 
-            <button
-              @click="emit('apply-supabase-template')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Aplicar plantilla
-            </button>
+              <button @click="emit('apply-supabase-template')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Aplicar plantilla
+              </button>
 
-            <button
-              @click="emit('explain-template-use')"
-              :disabled="!isAdminMode"
-              class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
-              :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'"
-            >
-              Com funciona
-            </button>
+              <button @click="emit('explain-template-use')" :disabled="!isAdminMode"
+                class="px-3 py-2 border rounded-xl shadow-sm transition-colors"
+                :class="isAdminMode ? 'bg-white hover:bg-gray-50' : 'bg-gray-200 cursor-not-allowed opacity-60'">
+                Com funciona
+              </button>
 
-            <button 
-              @click="emit('export-gef-excel')"
-              class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50"
-            >
-              Exportar Excel GEF
-            </button>
+              <button @click="emit('export-gef-excel')"
+                class="px-3 py-2 border rounded-xl shadow-sm bg-white hover:bg-gray-50">
+                Exportar Excel GEF
+              </button>
 
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
 
     <p class="text-xs text-gray-600 mt-4">
@@ -457,7 +354,8 @@ function handleImportExcel(event: Event) {
       calendari (tots períodes): <strong>{{ assignedCount }}</strong>.
     </p>
 
-    <div v-if="lastDeleted" class="mt-3 p-2 bg-yellow-50 border border-yellow-300 rounded-xl text-xs flex items-center justify-between gap-2">
+    <div v-if="lastDeleted"
+      class="mt-3 p-2 bg-yellow-50 border border-yellow-300 rounded-xl text-xs flex items-center justify-between gap-2">
       <span>
         Assignatura eliminada del catàleg:
         <strong>
@@ -465,16 +363,11 @@ function handleImportExcel(event: Event) {
         </strong>
       </span>
       <div class="flex gap-2">
-        <button
-          @click="emit('undo-delete')"
-          class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50"
-        >
+        <button @click="emit('undo-delete')" class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50">
           Desfer
         </button>
-        <button
-          @click="emit('set-last-deleted', null)"
-          class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50"
-        >
+        <button @click="emit('set-last-deleted', null)"
+          class="px-2 py-1 text-xs border rounded-lg bg-white hover:bg-gray-50">
           Amaga
         </button>
       </div>
@@ -482,55 +375,35 @@ function handleImportExcel(event: Event) {
 
     <div class="mt-4 flex flex-wrap items-center gap-3">
       <div class="flex flex-wrap gap-2">
-        <button
-          v-for="p in periods"
-          :key="p.id"
-          @click="emit('set-active-pid', p.id)"
-          class="px-4 py-2 rounded-full border text-sm font-medium transition-colors"
-          :class="[
+        <button v-for="p in periods" :key="p.id" @click="emit('set-active-pid', p.id)"
+          class="px-4 py-2 rounded-full border text-sm font-medium transition-colors" :class="[
             p.id === activePid
               ? 'bg-blue-600 text-white border-blue-700'
               : 'bg-white hover:bg-gray-50'
-          ]"
-        >
+          ]">
           {{ getPeriodLabel(p) }}
         </button>
       </div>
     </div>
 
-    <div
-      v-if="showPasswordDialog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      @click.self="cancelPassword"
-    >
+    <div v-if="showPasswordDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="cancelPassword">
       <div class="bg-white rounded-2xl p-6 shadow-xl max-w-md w-full mx-4">
         <h3 class="text-lg font-semibold mb-4">🔐 Introdueix la contrasenya d'administrador</h3>
-        
-        <input
-          v-model="passwordInput"
-          type="password"
-          placeholder="Contrasenya"
-          class="w-full border rounded-xl p-3 mb-3"
-          :class="passwordError ? 'border-red-500' : 'border-gray-300'"
-          @keyup.enter="submitPassword"
-          autofocus
-        />
-        
+
+        <input v-model="passwordInput" type="password" placeholder="Contrasenya"
+          class="w-full border rounded-xl p-3 mb-3" :class="passwordError ? 'border-red-500' : 'border-gray-300'"
+          @keyup.enter="submitPassword" autofocus />
+
         <p v-if="passwordError" class="text-sm text-red-600 mb-3">
           ❌ Contrasenya incorrecta. Torna-ho a intentar.
         </p>
-        
+
         <div class="flex gap-3 justify-end">
-          <button
-            @click="cancelPassword"
-            class="px-4 py-2 border rounded-xl hover:bg-gray-50"
-          >
+          <button @click="cancelPassword" class="px-4 py-2 border rounded-xl hover:bg-gray-50">
             Cancel·lar
           </button>
-          <button
-            @click="submitPassword"
-            class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-          >
+          <button @click="submitPassword" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
             Desbloquejar
           </button>
         </div>
