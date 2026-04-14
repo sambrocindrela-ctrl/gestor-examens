@@ -768,8 +768,8 @@ function handleExplainTemplateUse() {
         <q-card-section class="flex flex-wrap items-center gap-6">
           <!-- Period info -->
           <div class="flex items-center gap-sm">
-            <q-icon name="event_available" color="primary" size="sm" />
-            <span class="text-subtitle1 text-weight-bold text-primary dark:text-primary-100">Període actiu:</span>
+            <q-icon name="event_available" :color="$q.dark.isActive ? 'primary-300' : 'primary-800'" size="sm" />
+            <span class="text-subtitle1 text-weight-bold transition-colors" :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'">Període actiu:</span>
             <q-chip color="primary" text-color="white" icon="flag" class="text-weight-bold">
               {{ activePeriod.tipus }} {{ activePeriod.curs || '—' }}-{{ activePeriod.quad || '—' }}
             </q-chip>
@@ -777,11 +777,11 @@ function handleExplainTemplateUse() {
 
           <!-- Time slots info -->
           <div class="flex items-center gap-2">
-            <q-icon name="schedule" color="secondary" size="sm" />
-            <span class="text-subtitle1 text-weight-bold text-secondary dark:text-secondary">Franges horàries:</span>
+            <q-icon name="schedule" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" size="sm" />
+            <span class="text-subtitle1 text-weight-bold transition-colors" :class="$q.dark.isActive ? 'text-teal-3' : 'text-teal-9'">Franges horàries:</span>
             <div class="flex flex-wrap gap-2">
-              <q-chip v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i" color="secondary" outline
-                text-color="secondary" size="sm" class="text-weight-bold q-ma-none font-mono">
+              <q-chip v-for="(s, i) in (slotsPerPeriod[activePid] ?? [])" :key="i" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" outline
+                :text-color="$q.dark.isActive ? 'teal-3' : 'teal-9'" size="sm" class="text-weight-bold q-ma-none font-mono">
                 {{ s.start }}–{{ s.end }}
               </q-chip>
             </div>
@@ -791,21 +791,21 @@ function handleExplainTemplateUse() {
     </div>
 
     <!-- Two-Column Layout with Independent Scrolling -->
-    <div class="flex-1 flex overflow-hidden gap-4">
+    <section class="flex-1 flex overflow-hidden gap-4">
       <!-- Left Column: Subjects Tray -->
-      <div class="w-1/3 overflow-y-auto">
+      <article class="w-1/3 overflow-y-auto">
         <SubjectsTray :availableSubjects="availableSubjects" :subjects="subjects" :hiddenSubjectIds="hiddenSubjectIds"
           @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" />
-      </div>
+      </article>
 
       <!-- Right Column: Calendar -->
-      <div class="flex-1 overflow-y-auto">
+      <article class="flex-1 overflow-y-auto">
         <ExamCalendarGrid v-if="activePeriod" :activePeriod="activePeriod" :activePid="activePid"
           :slotsPerPeriod="slotsPerPeriod" :assignedPerPeriod="assignedPerPeriod" :subjects="subjects"
           :roomsData="roomsData" @remove-one-from-cell="handleRemoveOneFromCell"
           @update-cell-list="handleUpdateCellList" />
-      </div>
-    </div>
+      </article>
+    </section>
 
     <!-- Trash Bin (Fixed at bottom-right) -->
     <TrashBin @delete="deleteSubjectPermanently" />

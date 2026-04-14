@@ -49,11 +49,11 @@ function clone(element: Subject) {
       </ClientOnly>
 
       <div v-if="!availableSubjects.length" class="flex flex-col items-center justify-center q-py-xl opacity-70">
-        <q-icon name="all_inbox" size="4rem" color="grey-4" class="q-mb-md" />
-        <div class="text-subtitle1 text-weight-medium text-grey-6 text-center">
+        <q-icon name="all_inbox" size="4rem" :color="$q.dark.isActive ? 'grey-6' : 'grey-5'" class="q-mb-md" />
+        <div class="text-subtitle1 text-weight-medium text-center" :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'">
           Totes les assignatures programades
         </div>
-        <div class="text-caption text-grey-5 text-center mt-1" style="max-width: 250px;">
+        <div class="text-caption text-center mt-1" :class="$q.dark.isActive ? 'text-grey-5' : 'text-grey-7'" style="max-width: 250px;">
           No hi ha més assignatures pel període actiu o bé estan totes ocultes.
         </div>
       </div>

@@ -189,15 +189,15 @@ function handleImportExcel(event: Event) {
             </section>
             <section class="flex flex-row gap-4">
               <q-btn color="primary" @click="emit('save-supabase')" label="Guardar" icon="save" />
-              <q-btn outline color="primary" @click="emit('load-latest-supabase-calendar')" label="Carregar últim"
+              <q-btn outline :color="$q.dark.isActive ? 'primary-300' : 'primary-800'" @click="emit('load-latest-supabase-calendar')" label="Carregar últim"
                 icon="history" />
-              <q-btn outline color="primary" @click="emit('rename-selected-supabase-calendar')" label="Reanomenar"
+              <q-btn outline :color="$q.dark.isActive ? 'primary-300' : 'primary-800'" @click="emit('rename-selected-supabase-calendar')" label="Reanomenar"
                 icon="edit" />
 
-              <q-btn outline color="secondary" @click="emit('export-excel')" label="Excel" icon="table_view" />
-              <q-btn outline color="secondary" @click="emit('export-word')" label="Word" icon="description" />
+              <q-btn outline :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" @click="emit('export-excel')" label="Excel" icon="table_view" />
+              <q-btn outline :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" @click="emit('export-word')" label="Word" icon="description" />
 
-              <q-btn outline color="negative" @click="emit('delete-selected-supabase-calendar')" label="Eliminar"
+              <q-btn outline :color="$q.dark.isActive ? 'red-3' : 'negative'" @click="emit('delete-selected-supabase-calendar')" label="Eliminar"
                 icon="delete" />
             </section>
           </div>

@@ -69,7 +69,8 @@ function onRemove(subjectId: string) {
 
       <div
         v-if="(!list || list.length === 0)"
-        class="text-xs text-gray-400 italic pointer-events-none"
+        class="text-xs italic pointer-events-none"
+        :class="$q.dark.isActive ? 'text-grey-5' : 'text-grey-6'"
       >
         {{ disabled ? "No disponible" : "Arrossega aquí" }}
       </div>

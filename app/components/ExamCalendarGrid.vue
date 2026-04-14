@@ -114,9 +114,9 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
 </script>
 
 <template>
-  <div class="mb-8">
+  <section>
     <div class="flex items-center gap-3 mb-2">
-      <h5 class="text-lg font-semibold text-primary">
+      <h5 :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'" class="text-lg font-semibold">
         {{ activePeriod.tipus }} —
         {{ format(parseISO(activePeriod.startStr), "dd/MM") }} a
         {{ format(parseISO(activePeriod.endStr), "dd/MM") }}
@@ -126,24 +126,26 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
 
     <div v-for="(week, wIdx) in weeks" :key="wIdx" class="q-mb-xl">
       <div class="flex items-center gap-sm q-mb-sm">
-        <q-icon name="calendar_view_week" size="sm" color="secondary" />
-        <h6 class="text-subtitle1 font-bold text-secondary q-ma-none">
+        <q-icon name="calendar_view_week" size="sm" :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" />
+        <h6 :class="$q.dark.isActive ? 'text-teal-3' : 'text-teal-9'" class="text-subtitle1 font-bold q-ma-none">
           Setmana {{ format(week.mon, "dd/MM") }} — {{ format(week.fri, "dd/MM") }}
         </h6>
-        <q-badge outline color="secondary" label="dl–dv" class="q-ml-sm" />
+        <q-badge outline :color="$q.dark.isActive ? 'teal-3' : 'teal-9'" label="dl–dv" class="q-ml-sm" />
       </div>
 
       <q-markup-table :dark="$q.dark.isActive" flat bordered dense class="shadow-1 overflow-hidden" separator="cell">
         <thead>
           <tr :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'" class="border-b">
-            <th :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-left font-bold" style="width: 120px;">
+            <th :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-left font-bold"
+              style="width: 120px;">
               <div class="q-pa-xs">Franja</div>
             </th>
             <th v-for="i in 5" :key="i" class="text-left font-bold" style="min-width: 180px;">
-              <div :class="$q.dark.isActive ? 'text-grey-5' : 'text-grey-6'" class="text-uppercase" style="font-size: 0.70rem; letter-spacing: 0.5px;">
+              <div :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-uppercase"
+                style="font-size: 0.70rem; letter-spacing: 0.5px;">
                 {{ ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres"][i - 1] }}
               </div>
-              <div class="text-subtitle2 text-primary">
+              <div :class="$q.dark.isActive ? 'text-primary-300' : 'text-primary-800'" class="text-subtitle2">
                 {{ fmtDM(addDays(week.mon, i - 1)) }}
               </div>
             </th>
@@ -151,7 +153,8 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
         </thead>
         <tbody>
           <tr v-for="(slot, slotIndex) in (slotsPerPeriod[activePid] ?? [])" :key="slotIndex">
-            <td :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'" class="text-left align-top border-r">
+            <td :class="$q.dark.isActive ? 'bg-grey-10 border-grey-9' : 'bg-grey-1 border-grey-3'"
+              class="text-left align-top border-r">
               <div :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-8'" class="text-weight-bold q-mt-xs">
                 {{ slot.start }}<span class="text-weight-light text-grey-5"> – </span>{{ slot.end }}
               </div>
@@ -169,5 +172,5 @@ function getExtrasForSubjects(dateIso: string, slotIndex: number, subjIds: strin
         </tbody>
       </q-markup-table>
     </div>
-  </div>
+  </section>
 </template>
