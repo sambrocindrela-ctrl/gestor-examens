@@ -92,6 +92,7 @@ const {
   primaryTextClass,
   secondaryTextClass,
   headerRowClass,
+  mutedTextClass,
   mutedColor,
 } = useDarkColors();
 

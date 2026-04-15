@@ -1,7 +1,7 @@
 <template>
-  <QLayout view="hHh Lpr lff">
+  <QLayout view="hHh Lpr lff" class="h-screen overflow-hidden">
     <AppDefaultHeader />
-    <QPageContainer class="min-h-screen bg-gray-light dark:bg-black">
+    <QPageContainer class="h-full overflow-hidden bg-gray-light dark:bg-black">
       <slot />
     </QPageContainer>
   </QLayout>

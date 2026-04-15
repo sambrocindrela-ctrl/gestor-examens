@@ -739,7 +739,7 @@ function handleExplainTemplateUse() {
 </script>
 
 <template>
-  <main class="flex flex-col gap-4 h-screen text-gray-900 p-6">
+  <main class="flex flex-col gap-4 h-full text-gray-900 overflow-hidden q-pa-md">
     <!-- Header Section (Fixed) -->
     <div class="shrink-0 flex flex-col gap-4">
 
@@ -793,16 +793,16 @@ function handleExplainTemplateUse() {
       </q-card>
     </div>
 
-    <!-- Two-Column Layout with Independent Scrolling -->
-    <section class="flex-1 flex overflow-hidden gap-4">
+    <!-- Two-Column Layout with Unified Scrolling -->
+    <section class="flex-1 flex min-h-0 overflow-hidden gap-4 scroll-smooth pr-2">
       <!-- Left Column: Subjects Tray -->
-      <article class="w-1/3 overflow-y-auto">
+      <article class="w-1/3 shrink-0">
         <SubjectsTray :availableSubjects="availableSubjects" :subjects="subjects" :hiddenSubjectIds="hiddenSubjectIds"
           @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" />
       </article>
 
       <!-- Right Column: Calendar -->
-      <article class="flex-1 overflow-y-auto">
+      <article class="flex-1 min-w-0 overflow-y-auto h-full">
         <ExamCalendarGrid v-if="activePeriod" :activePeriod="activePeriod" :activePid="activePid"
           :slotsPerPeriod="slotsPerPeriod" :assignedPerPeriod="assignedPerPeriod" :subjects="subjects"
           :roomsData="roomsData" @remove-one-from-cell="handleRemoveOneFromCell"

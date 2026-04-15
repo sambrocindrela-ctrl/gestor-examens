@@ -1,13 +1,13 @@
 <template>
-  <NuxtLayout name="private">
-    <ClientOnly>
+  <ClientOnly>
+    <NuxtLayout :name="isAuthenticated ? 'private' : 'default'">
       <AppLoading v-if="!isAuthenticated" />
-      <NuxtPage v-else :transition="true" class="bg-gray-100 dark:bg-black" />
-      <template #fallback>
-        <AppLoading />
-      </template>
-    </ClientOnly>
-  </NuxtLayout>
+      <NuxtPage v-else :transition="true" class="h-full bg-gray-100 dark:bg-black" />
+    </NuxtLayout>
+    <template #fallback>
+      <AppLoading />
+    </template>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
