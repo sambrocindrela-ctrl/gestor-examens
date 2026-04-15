@@ -1,0 +1,4 @@
+# generic
+services:
+  gestor-examens:
+    container_name: gestor-examens

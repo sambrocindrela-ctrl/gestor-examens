@@ -1,0 +1,68 @@
+vars-pre:
+  stage: .pre
+  only:
+    - devel
+  script:
+    - echo "SERVER=$PRE_SERVER" >> vars.env
+    - echo "PROJECT_PATH=$PRE_PATH/$CI_PROJECT_NAME" >> vars.env
+    - echo "ENV_MODE=pre" >> vars.env
+    - echo "OIDC_BASE_URL=$PRE_OIDC_BASE_URL" >> vars.env
+    - echo "OIDC_CLIENT_ID=$PRE_OIDC_CLIENT_ID" >> vars.env
+  artifacts:
+    reports:
+      dotenv: vars.env
+
+vars-prod:
+  stage: .pre
+  only:
+    - main
+  script:
+    - echo "SERVER=$PROD_SERVER" >> vars.env
+    - echo "PROJECT_PATH=$PROD_PATH/$CI_PROJECT_NAME" >> vars.env
+    - echo "ENV_MODE=prod" >> vars.env
+    - echo "OIDC_BASE_URL=$PROD_OIDC_BASE_URL" >> vars.env
+    - echo "OIDC_CLIENT_ID=$PROD_OIDC_CLIENT_ID" >> vars.env
+  artifacts:
+    reports:
+      dotenv: vars.env
+
+build site:
+  image: oven/bun:1-alpine
+  stage: build
+  only:
+    - devel
+    - main
+  script:
+    - echo "NUXT_API_BASE_URL=$API_BASE_URL" > ./.env
+    - echo "NUXT_PUBLIC_OIDC_BASE_URL=$OIDC_BASE_URL" >> ./.env
+    - echo "NUXT_PUBLIC_OIDC_CLIENT_ID=$OIDC_CLIENT_ID" >> ./.env
+    - echo "NUXT_APP_BASE_URL=$APP_BASE_URL" >> ./.env
+    - echo "VITE_ADMIN_PASSWORD=$VITE_ADMIN_PASSWORD" >> ./.env
+    - export NUXT_APP_BASE_URL=$APP_BASE_URL
+    - bun install
+    - '[ -f .nuxt/tsconfig.json ] || (mkdir -p .nuxt && echo ''{"compilerOptions":{}}'' > .nuxt/tsconfig.json)'
+    - bun x nuxi build
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - .output
+      - .env
+
+deploy:
+  image: alpine
+  stage: deploy
+  only:
+    - devel
+    - main
+  script:
+    - apk add --no-cache rsync openssh
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - ssh root@$SERVER "mkdir -p $PROJECT_PATH/.output"
+    - rsync -rav --delete .output/ root@$SERVER:$PROJECT_PATH/.output
+    - scp Docker/* .env root@$SERVER:$PROJECT_PATH
+    - ssh root@$SERVER "cd /root/stacks-etsetb; ./stacks.sh -e=$ENV_MODE -a=build gestor-examens"
+    - ssh root@$SERVER "cd /root/stacks-etsetb; ./stacks.sh -e=$ENV_MODE -a=down gestor-examens"
+    - ssh root@$SERVER "cd /root/stacks-etsetb; ./stacks.sh -e=$ENV_MODE -a=up gestor-examens"

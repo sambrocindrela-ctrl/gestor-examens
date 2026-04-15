@@ -1,0 +1,9 @@
+# OIDC MODULE CONFIG
+NUXT_PUBLIC_OIDC_BASE_URL=https://login.pre.upc.edu
+NUXT_PUBLIC_OIDC_CLIENT_ID=
+
+# PASSWORD ADMIN (gestor-examens)
+VITE_ADMIN_PASSWORD=
+
+# API
+NUXT_API_BASE_URL=http://local.dev.upc.edu:8000/api2/private/v1

@@ -1,0 +1,16 @@
+# for production
+services:
+  gestor-examens:
+    build:
+      context: .
+      target: "production-stage"
+    restart: unless-stopped
+    networks:
+      - frontend
+    env_file:
+      - .env
+
+networks:
+  frontend:
+    name: frontend
+    external: true
