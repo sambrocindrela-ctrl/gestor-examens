@@ -30,6 +30,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  --height-header: 64px;
 }
 
 .logo {

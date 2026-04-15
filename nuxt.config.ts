@@ -4,9 +4,19 @@ export default defineNuxtConfig({
  ssr: true,
  compatibilityDate: '2025-01-01',
  css: ['~/assets/css/App.css'],
-
+ devServer: {
+  port: 1024,
+  host: "local.dev.upc.edu",
+  https: true
+},
  vite: {
   plugins: [tailwindcss()],
+  resolve: {
+    alias: {
+      stream: 'stream-browserify',
+      buffer: 'buffer',
+    },
+  },
   server: {
       allowedHosts: ["local.dev.upc.edu"],
     },
@@ -14,7 +24,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     API_BASE_URL: process.env.API_BASE_URL,
     public: {
-      adminPassword: process.env.ADMIN_PASSWORD || '',
+      adminPassword: '',
       OIDC_CLIENT_ID: '',
       OIDC_BASE_URL: '',
       projectName: process.env.NUXT_PUBLIC_PROJECT_NAME || 'Planificador d\'exàmens',

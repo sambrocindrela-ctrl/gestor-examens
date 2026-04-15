@@ -25,7 +25,7 @@ export function useDarkColors() {
   const subtleColor = computed(() => dark.value ? 'grey-5' : 'grey-7');
 
   /** CSS class: primary text */
-  const primaryTextClass = computed(() => dark.value ? 'text-primary-300' : 'primary');
+  const primaryTextClass = computed(() => dark.value ? 'text-primary-300' : 'text-primary');
 
   /** CSS class: secondary text */
   const secondaryTextClass = computed(() => dark.value ? 'text-teal-3' : 'secondary');
