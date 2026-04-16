@@ -32,6 +32,8 @@ import type {
   RoomsEnroll,
 } from "../types/examPlanner";
 
+import { getPrioritySlotColor } from "./levelColors";
+
 /* Helpers de dates, iguals que al component */
 
 function mondayOfWeek(d: Date) {
@@ -266,6 +268,27 @@ function getSlotColor(slotStart: string, isDisabled: boolean = false): string {
 
   // Default fallback (shouldn't happen with normal schedules)
   return "FFFFFF";
+}
+
+function getFinalCellColor(args: {
+  slotStart: string;
+  isDisabled?: boolean;
+  subjectsInCell?: Subject[];
+}): string {
+  const { slotStart, isDisabled = false, subjectsInCell = [] } = args;
+
+  if (isDisabled) {
+    return getSlotColor(slotStart, true);
+  }
+
+  const levels = subjectsInCell.map((s) => s.nivell);
+  const levelColor = getPrioritySlotColor(levels);
+
+  if (levelColor) {
+    return levelColor.replace("#", "");
+  }
+
+  return getSlotColor(slotStart, false);
 }
 
 function buildSubjectParagraphsForWord(
@@ -573,12 +596,26 @@ export function exportPlannerExcel(args: {
           if (!cell) (ws as any)[addr] = cellObj;
 
           // Determine if this day is disabled
-          const di = c - 1; // column index to day index (0-4)
-          const day = addDays(rowWeekStart, di);
-          const isDisabled = isDisabledDay(day, p);
+const di = c - 1;
+const day = addDays(rowWeekStart, di);
+const isDisabled = isDisabledDay(day, p);
 
-          // Get color based on slot start time
-          const color = getSlotColor(slot.start, isDisabled);
+let subjectsInCell: Subject[] = [];
+
+if (!isDisabled) {
+  const dateIso = format(day, "yyyy-MM-dd");
+  const key = `${dateIso}|${si}`;
+  const ids = amap[key] ?? [];
+  subjectsInCell = ids
+    .map((id) => subjects.find((s) => s.id === id))
+    .filter(Boolean) as Subject[];
+}
+
+const color = getFinalCellColor({
+  slotStart: slot.start,
+  isDisabled,
+  subjectsInCell,
+});
 
           const existing = cellObj.s ?? {};
           cellObj.s = {
@@ -783,8 +820,12 @@ export async function exportPlannerWord(args: {
               cellParas.push(new Paragraph({ text: "" }));
             }
 
-            // Get color based on slot start time
-            const color = getSlotColor(slot.start, false);
+            // Determine final cell color based on disabled day, levels in the cell, or slot time
+            const color = getFinalCellColor({
+              slotStart: slot.start,
+              isDisabled: false,
+              subjectsInCell: list,
+            });
 
             rowCells.push(
               new TableCell({
