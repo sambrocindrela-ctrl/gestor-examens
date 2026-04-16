@@ -308,13 +308,13 @@ function buildSubjectParagraphsForWord(
     })
   );
 
-  if (s.nivell) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: `Nivell: ${s.nivell}` })],
-      })
-    );
-  }
+if (s.nivell) {
+  paras.push(
+    new Paragraph({
+      children: [new TextRun({ text: s.nivell })],
+    })
+  );
+}
 
   if (s.MATT) {
     paras.push(
