@@ -25,3 +25,4 @@ logs
 
 # lock files
 package-lock.json
+bun.lock
