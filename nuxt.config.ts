@@ -83,4 +83,13 @@ export default defineNuxtConfig({
       },
     },
   },
+  nitro: {
+    hooks: {
+      close: () => {
+        if (process.env.CI) {
+          process.exit(0);
+        }
+      },
+    },
+  },
 });
