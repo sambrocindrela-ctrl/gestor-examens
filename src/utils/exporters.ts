@@ -35,14 +35,16 @@ import type {
 
 import { getPrioritySlotColor } from "./levelColors";
 
-function keepTogether(text: string) {
-  return text.split("").join("\u2060");
+function protectToken(text: string) {
+  return text
+    .replace(/-/g, "\u2011")
+    .replace(/\//g, "\u2060/\u2060");
 }
 
 function keepCommaSeparatedItems(text: string) {
   return text
     .split(",")
-    .map((part) => keepTogether(part.trim()))
+    .map((part) => protectToken(part.trim()))
     .join(", ");
 }
 
