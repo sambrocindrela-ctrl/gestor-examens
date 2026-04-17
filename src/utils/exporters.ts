@@ -205,7 +205,6 @@ if (s.nivell) {
 }
 
   const extraLines: string[] = [];
-  if (s.nivell) extraLines.push(s.nivell);
   if (s.MET) extraLines.push(s.MET);
   if (s.MATT) extraLines.push(s.MATT);
   if (s.MEE) extraLines.push(s.MEE);
