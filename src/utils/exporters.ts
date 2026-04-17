@@ -34,6 +34,8 @@ import type {
 
 import { getPrioritySlotColor } from "./levelColors";
 
+import { Table, WidthType, TableLayoutType, BorderStyle } from "docx";
+
 /* Helpers de dates, iguals que al component */
 
 function mondayOfWeek(d: Date) {
@@ -840,18 +842,19 @@ export async function exportPlannerWord(args: {
           rows.push(new TableRow({ children: rowCells }));
         });
 
-        const table = new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows,
-          borders: {
-            top: { style: BorderStyle.SINGLE, size: 2 },
-            bottom: { style: BorderStyle.SINGLE, size: 2 },
-            left: { style: BorderStyle.SINGLE, size: 2 },
-            right: { style: BorderStyle.SINGLE, size: 2 },
-            insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
-            insideVertical: { style: BorderStyle.SINGLE, size: 1 },
-          },
-        });
+const table = new Table({
+  width: { size: 100, type: WidthType.PERCENTAGE },
+  layout: TableLayoutType.AUTOFIT,
+  rows,
+  borders: {
+    top: { style: BorderStyle.SINGLE, size: 2 },
+    bottom: { style: BorderStyle.SINGLE, size: 2 },
+    left: { style: BorderStyle.SINGLE, size: 2 },
+    right: { style: BorderStyle.SINGLE, size: 2 },
+    insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+    insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+  },
+});
 
         sectionChildren.push(table);
 
