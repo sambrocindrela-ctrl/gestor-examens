@@ -10,7 +10,7 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
-  TableLayoutType
+  TableLayoutType,
   ShadingType,
 } from "docx";
 import {
