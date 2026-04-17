@@ -19,13 +19,13 @@ const levelBgColor = getSubjectLevelColor(props.s.nivell);
   >
     <span class="font-medium truncate">
       <template v-if="s.nivell">
-    {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
-  </template>
-  <template v-else>
-    {{ s.sigles }} · {{ s.codi }}
-  </template>
-</span>
+        {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
+      </template>
+      <template v-else>
+        {{ s.sigles }} · {{ s.codi }}
+      </template>
+    </span>
 
-    <MastersLines v-else :s="s" />
+    <MastersLines v-if="!s.nivell" :s="s" />
   </div>
 </template>
