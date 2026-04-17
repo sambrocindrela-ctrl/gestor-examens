@@ -10,6 +10,7 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
+  TableLayoutType
   ShadingType,
 } from "docx";
 import {
@@ -33,8 +34,6 @@ import type {
 } from "../types/examPlanner";
 
 import { getPrioritySlotColor } from "./levelColors";
-
-import { Table, WidthType, TableLayoutType, BorderStyle } from "docx";
 
 /* Helpers de dates, iguals que al component */
 
