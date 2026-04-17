@@ -198,7 +198,11 @@ export function exportPlannerCSV(args: {
 function formatSubjectForCell(s: Subject, extra?: RoomsEnroll): string {
   const lines: string[] = [];
 
-  lines.push(`${s.codi} · ${s.sigles}`);
+if (s.nivell) {
+  lines.push(`${s.nivell} · ${s.sigles} · ${s.codi}`);
+} else {
+  lines.push(`${s.sigles} · ${s.codi}`);
+}
 
   const extraLines: string[] = [];
   if (s.nivell) extraLines.push(s.nivell);
@@ -301,7 +305,10 @@ function buildSubjectParagraphsForWord(
     new Paragraph({
       children: [
         new TextRun({
-          text: `${s.codi} · ${s.sigles}`,
+          text: s.nivell
+            ? `${s.nivell} · ${s.sigles} · ${s.codi}`
+            : `${s.sigles} · ${s.codi}`,
+
           bold: true,
         }),
       ],
