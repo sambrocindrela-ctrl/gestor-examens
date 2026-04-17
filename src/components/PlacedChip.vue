@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Subject, RoomsEnroll } from "../types/examPlanner";
-import { getSubjectLevelColor } from "../utils/levelColors";  
+import { getSubjectLevelColor } from "../utils/levelColors";
 import MastersLines from "./MastersLines.vue";
 
 const props = defineProps<{
@@ -14,7 +14,7 @@ const hasStud =
   typeof props.extra.students === "number" &&
   !Number.isNaN(props.extra.students);
 
-const levelBgColor = getSubjectLevelColor(props.s.nivell);  
+const levelBgColor = getSubjectLevelColor(props.s.nivell);
 </script>
 
 <template>
@@ -23,15 +23,14 @@ const levelBgColor = getSubjectLevelColor(props.s.nivell);
     :style="{ backgroundColor: levelBgColor ?? '#FFFFFF' }"
     title="Arrossega per moure a una altra franja"
   >
-    
-<div class="text-sm font-semibold leading-tight">
-  <template v-if="s.nivell">
-    {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
-  </template>
-  <template v-else>
-    {{ s.sigles }} · {{ s.codi }}
-  </template>
-</div>
+    <div class="text-sm font-semibold leading-tight">
+      <template v-if="s.nivell">
+        {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
+      </template>
+      <template v-else>
+        {{ s.sigles }} · {{ s.codi }}
+      </template>
+    </div>
 
     <MastersLines v-if="!s.nivell" :s="s" />
 
