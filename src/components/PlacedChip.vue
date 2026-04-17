@@ -23,13 +23,15 @@ const levelBgColor = getSubjectLevelColor(props.s.nivell);
     :style="{ backgroundColor: levelBgColor ?? '#FFFFFF' }"
     title="Arrossega per moure a una altra franja"
   >
-    <div class="text-sm font-semibold leading-tight">
-      {{ s.sigles }} · {{ s.codi }}
-    </div>
-
-    <div v-if="s.nivell" class="text-xs opacity-80">
-     {{ s.nivell }}
-    </div>
+    
+<div class="text-sm font-semibold leading-tight">
+  <template v-if="s.nivell">
+    {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
+  </template>
+  <template v-else>
+    {{ s.sigles }} · {{ s.codi }}
+  </template>
+</div>
 
     <MastersLines v-else :s="s" />
 
