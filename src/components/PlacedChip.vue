@@ -33,7 +33,7 @@ const levelBgColor = getSubjectLevelColor(props.s.nivell);
   </template>
 </div>
 
-    <MastersLines v-else :s="s" />
+    <MastersLines v-if="!s.nivell" :s="s" />
 
     <div v-if="hasRooms || hasStud" class="mt-1 space-y-0.5 text-xs">
       <div v-if="hasRooms">
