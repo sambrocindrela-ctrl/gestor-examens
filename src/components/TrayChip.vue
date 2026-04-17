@@ -24,6 +24,7 @@ const levelBgColor = getSubjectLevelColor(props.s.nivell);
   <template v-else>
     {{ s.sigles }} · {{ s.codi }}
   </template>
+</span>
 
     <MastersLines v-else :s="s" />
   </div>
