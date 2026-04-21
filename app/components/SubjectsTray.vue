@@ -44,7 +44,7 @@ function restoreAll() {
   <div class="column q-gutter-y-md">
 
     <!-- 1. PENDING QUEUE -->
-    <TraySection title="Cua de Pendents (CSV)" subtitle="Assignatures per ubicar o decidir què fer." icon="list_alt"
+    <TraySection title="Pendents de decidir" subtitle="Assignatures per ubicar o decidir què fer." icon="list_alt"
       icon-color="primary" :subjects="queueSubjects" empty-text="Cua buida" :title-class="primaryTextClass"
       @add="(id) => emit('move-to-queue', id)" />
 
