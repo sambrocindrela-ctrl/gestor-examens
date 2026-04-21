@@ -64,6 +64,8 @@ export interface ExamPlannerSnapshot {
   roomsData: RoomsDataPerPeriod;
   allowedPeriodsBySubject: Record<string, number[]>;
   hiddenSubjectIds: string[];
+  noExamIds: string[];
+  clipboardIds: string[];
 }
 
 /**

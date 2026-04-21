@@ -42,6 +42,8 @@ const {
   roomsData,
   allowedPeriodsBySubject,
   hiddenSubjectIds,
+  noExamIds,
+  clipboardIds,
   lastDeleted,
 
   getSnapshot,
@@ -140,8 +142,8 @@ const usedIds = computed(() => {
   return s;
 });
 
-// Filtrat de la safata
-const availableSubjects = computed(() => {
+// Filtrat de la safata base (sense les que ja son a l'horari o ocultes)
+const filteredBaseSubjects = computed(() => {
   const pcurs = activePeriod.value?.curs != null ? String(activePeriod.value.curs) : undefined;
   const pquad = activePeriod.value?.quad;
   const pid = activePid.value;
@@ -152,16 +154,25 @@ const availableSubjects = computed(() => {
     .filter((s) => (pcurs ? s.curs === pcurs : true))
     .filter((s) => {
       const allowed = allowedPeriodsBySubject.value[s.id];
-
-      // Si el CSV ha definit explícitament en quins períodes pot anar
-      if (Array.isArray(allowed)) {
-        return allowed.includes(pid);
-      }
-
-      // Si no, filtre per quadrimestre
+      if (Array.isArray(allowed)) return allowed.includes(pid);
       return pquad ? s.quadrimestre === pquad : true;
     });
 });
+
+const queueSubjects = computed(() =>
+  filteredBaseSubjects.value.filter(s => !noExamIds.value.includes(s.id) && !clipboardIds.value.includes(s.id))
+);
+
+const noExamSubjects = computed(() =>
+  filteredBaseSubjects.value.filter(s => noExamIds.value.includes(s.id))
+);
+
+const clipboardSubjects = computed(() =>
+  filteredBaseSubjects.value.filter(s => clipboardIds.value.includes(s.id))
+);
+
+// Obsolet pero mantingut per compatibilitat amb altres props si calen
+const availableSubjects = queueSubjects;
 
 /* --- Handlers --- */
 
@@ -189,6 +200,21 @@ function handleUpdateCellList(pid: number, dateIso: string, slotIndex: number, n
   }
 
   assignedPerPeriod.value = { ...assignedPerPeriod.value, [pid]: copy };
+}
+
+function handleMoveToQueue(id: string) {
+  noExamIds.value = noExamIds.value.filter(x => x !== id);
+  clipboardIds.value = clipboardIds.value.filter(x => x !== id);
+}
+
+function handleMoveToNoExam(id: string) {
+  clipboardIds.value = clipboardIds.value.filter(x => x !== id);
+  if (!noExamIds.value.includes(id)) noExamIds.value.push(id);
+}
+
+function handleMoveToClipboard(id: string) {
+  noExamIds.value = noExamIds.value.filter(x => x !== id);
+  if (!clipboardIds.value.includes(id)) clipboardIds.value.push(id);
 }
 
 /* --- Import/Export Wrappers --- */
@@ -797,8 +823,17 @@ function handleExplainTemplateUse() {
     <section class="flex-1 flex min-h-0 overflow-hidden gap-4 scroll-smooth pr-2">
       <!-- Left Column: Subjects Tray -->
       <article class="w-1/3 shrink-0">
-        <SubjectsTray :availableSubjects="availableSubjects" :subjects="subjects" :hiddenSubjectIds="hiddenSubjectIds"
-          @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" />
+        <SubjectsTray 
+          :queueSubjects="queueSubjects"
+          :noExamSubjects="noExamSubjects"
+          :clipboardSubjects="clipboardSubjects"
+          :subjects="subjects" 
+          :hiddenSubjectIds="hiddenSubjectIds"
+          @update:hiddenSubjectIds="(val) => (hiddenSubjectIds = val)" 
+          @move-to-queue="handleMoveToQueue"
+          @move-to-no-exam="handleMoveToNoExam"
+          @move-to-clipboard="handleMoveToClipboard"
+        />
       </article>
 
       <!-- Right Column: Calendar -->
@@ -810,7 +845,7 @@ function handleExplainTemplateUse() {
       </article>
     </section>
 
-    <!-- Trash Bin (Fixed at bottom-right) -->
-    <TrashBin @delete="deleteSubjectPermanently" />
+    <!-- Clipboard Drop Zone (Fixed at bottom-right) -->
+    <TrashBin @move-to-clipboard="deleteSubjectPermanently" />
   </main>
 </template>

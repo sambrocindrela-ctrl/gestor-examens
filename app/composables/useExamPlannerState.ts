@@ -76,6 +76,10 @@ export function useExamPlannerState() {
   /* Ocultes */
   const hiddenSubjectIds = ref<string[]>([]);
 
+  /* Categories de la safata */
+  const noExamIds = ref<string[]>([]);
+  const clipboardIds = ref<string[]>([]);
+
   /* --- Estat per Desfer --- */
   type DeletedSnapshot = {
     subject: Subject;
@@ -109,6 +113,8 @@ export function useExamPlannerState() {
       roomsData: roomsData.value,
       allowedPeriodsBySubject: allowedPeriodsBySubject.value,
       hiddenSubjectIds: hiddenSubjectIds.value,
+      noExamIds: noExamIds.value,
+      clipboardIds: clipboardIds.value,
     };
   }
 
@@ -121,6 +127,8 @@ export function useExamPlannerState() {
     roomsData.value = snapshot.roomsData ?? {};
     allowedPeriodsBySubject.value = snapshot.allowedPeriodsBySubject ?? {};
     hiddenSubjectIds.value = snapshot.hiddenSubjectIds ?? [];
+    noExamIds.value = snapshot.noExamIds ?? [];
+    clipboardIds.value = snapshot.clipboardIds ?? [];
   }
 
   /* --- Actions --- */
@@ -171,9 +179,35 @@ export function useExamPlannerState() {
     }
   }
 
-  function deleteSubjectPermanently(subjectId: string) {
+  function deleteSubjectPermanently(subjectId: string, force = false) {
     const subj = subjects.value.find((s) => s.id === subjectId);
     if (!subj) return;
+
+    // Si no és un esborrat forçat (per l'admin), el movem al Clipboard en comptes de borrar-lo
+    if (!force) {
+      // 1) Treure de l'horari
+      for (const [pidStr, amap] of Object.entries(assignedPerPeriod.value)) {
+        const pid = Number(pidStr);
+        const amapCopy = { ...amap };
+        let modified = false;
+
+        for (const [cellKey, ids] of Object.entries(amapCopy)) {
+          if (ids.includes(subjectId)) {
+            amapCopy[cellKey] = ids.filter(id => id !== subjectId);
+            if (amapCopy[cellKey].length === 0) delete amapCopy[cellKey];
+            modified = true;
+          }
+        }
+        if (modified) assignedPerPeriod.value[pid] = amapCopy;
+      }
+
+      // 2) Assegurar que està al Clipboard i no a altres categories
+      noExamIds.value = noExamIds.value.filter(id => id !== subjectId);
+      if (!clipboardIds.value.includes(subjectId)) {
+        clipboardIds.value.push(subjectId);
+      }
+      return;
+    }
 
     if (
       !confirm(
@@ -374,6 +408,8 @@ export function useExamPlannerState() {
     roomsData,
     allowedPeriodsBySubject,
     hiddenSubjectIds,
+    noExamIds,
+    clipboardIds,
     lastDeleted,
 
     getSnapshot,
