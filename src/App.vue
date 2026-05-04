@@ -573,8 +573,6 @@ async function handleSelectedCalendarChange(id: string) {
     return;
   }
 
-  if (id === selectedCalendarId.value) return;
-
   const canContinue = await maybeSaveBeforeChangingCalendar();
   if (!canContinue) return;
 
