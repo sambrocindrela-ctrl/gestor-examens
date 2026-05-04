@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Subject, RoomsEnroll } from "../types/examPlanner";
+import { getSubjectLevelColor } from "../utils/levelColors";
 import MastersLines from "./MastersLines.vue";
 
 const props = defineProps<{
@@ -12,21 +13,26 @@ const hasStud =
   props.extra &&
   typeof props.extra.students === "number" &&
   !Number.isNaN(props.extra.students);
+
+const levelBgColor = getSubjectLevelColor(props.s.nivell);
 </script>
 
 <template>
   <div
-    class="relative p-2 rounded-2xl border-2 border-gray-800 bg-white cursor-grab active:cursor-grabbing hover:border-indigo-500 transition-colors"
+    class="relative p-2 rounded-2xl border-2 border-gray-800 cursor-grab active:cursor-grabbing hover:border-indigo-500 transition-colors"
+    :style="{ backgroundColor: levelBgColor ?? '#FFFFFF' }"
     title="Arrossega per moure a una altra franja"
   >
     <div class="text-sm font-semibold leading-tight">
-      {{ s.sigles }} · {{ s.codi }}
+      <template v-if="s.nivell">
+        {{ s.nivell }} · {{ s.sigles }} · {{ s.codi }}
+      </template>
+      <template v-else>
+        {{ s.sigles }} · {{ s.codi }}
+      </template>
     </div>
 
-    <div v-if="s.nivell" class="text-xs opacity-80">
-      Nivell: {{ s.nivell }}
-    </div>
-    <MastersLines v-else :s="s" />
+    <MastersLines v-if="!s.nivell" :s="s" />
 
     <div v-if="hasRooms || hasStud" class="mt-1 space-y-0.5 text-xs">
       <div v-if="hasRooms">

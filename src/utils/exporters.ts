@@ -10,6 +10,7 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
+  TableLayoutType,
   ShadingType,
 } from "docx";
 import {
@@ -31,6 +32,21 @@ import type {
   RoomsMapPerCell,
   RoomsEnroll,
 } from "../types/examPlanner";
+
+import { getPrioritySlotColor } from "./levelColors";
+
+function protectToken(text: string) {
+  return text
+    .replace(/-/g, "\u2011")
+    .replace(/\//g, "\u2060/\u2060");
+}
+
+function keepCommaSeparatedItems(text: string) {
+  return text
+    .split(",")
+    .map((part) => protectToken(part.trim()))
+    .join(", ");
+}
 
 /* Helpers de dates, iguals que al component */
 
@@ -196,10 +212,13 @@ export function exportPlannerCSV(args: {
 function formatSubjectForCell(s: Subject, extra?: RoomsEnroll): string {
   const lines: string[] = [];
 
-  lines.push(`${s.codi} · ${s.sigles}`);
+if (s.nivell) {
+  lines.push(`${s.nivell} · ${s.sigles} · ${s.codi}`);
+} else {
+  lines.push(`${s.sigles} · ${s.codi}`);
+}
 
   const extraLines: string[] = [];
-  if (s.nivell) extraLines.push(s.nivell);
   if (s.MET) extraLines.push(s.MET);
   if (s.MATT) extraLines.push(s.MATT);
   if (s.MEE) extraLines.push(s.MEE);
@@ -268,6 +287,27 @@ function getSlotColor(slotStart: string, isDisabled: boolean = false): string {
   return "FFFFFF";
 }
 
+function getFinalCellColor(args: {
+  slotStart: string;
+  isDisabled?: boolean;
+  subjectsInCell?: Subject[];
+}): string {
+  const { slotStart, isDisabled = false, subjectsInCell = [] } = args;
+
+  if (isDisabled) {
+    return getSlotColor(slotStart, true);
+  }
+
+  const levels = subjectsInCell.map((s) => s.nivell);
+  const levelColor = getPrioritySlotColor(levels);
+
+  if (levelColor) {
+    return levelColor.replace("#", "");
+  }
+
+  return getSlotColor(slotStart, false);
+}
+
 function buildSubjectParagraphsForWord(
   s: Subject,
   extra?: RoomsEnroll
@@ -278,52 +318,66 @@ function buildSubjectParagraphsForWord(
     new Paragraph({
       children: [
         new TextRun({
-          text: `${s.codi} · ${s.sigles}`,
+          text: s.nivell
+            ? `${s.nivell} · ${s.sigles} · ${s.codi}`
+            : `${s.sigles} · ${s.codi}`,
+
           bold: true,
         }),
       ],
     })
   );
 
-  if (s.nivell) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: `Nivell: ${s.nivell}` })],
-      })
-    );
-  }
-
   if (s.MATT) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: s.MATT, color: "0000FF" })],
-      })
-    );
-  }
+  paras.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: keepCommaSeparatedItems(s.MATT),
+          color: "0000FF",
+        }),
+      ],
+    })
+  );
+}
 
-  if (s.MET) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: s.MET })],
-      })
-    );
-  }
+if (s.MET) {
+  paras.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: keepCommaSeparatedItems(s.MET),
+        }),
+      ],
+    })
+  );
+}
 
-  if (s.MCYBERS) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: s.MCYBERS, color: "008000" })],
-      })
-    );
-  }
+if (s.MCYBERS) {
+  paras.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: keepCommaSeparatedItems(s.MCYBERS),
+          color: "008000",
+        }),
+      ],
+    })
+  );
+}
 
-  if (s.MEE) {
-    paras.push(
-      new Paragraph({
-        children: [new TextRun({ text: s.MEE, color: "FF0000" })],
-      })
-    );
-  }
+if (s.MEE) {
+  paras.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: keepCommaSeparatedItems(s.MEE),
+          color: "FF0000",
+        }),
+      ],
+    })
+  );
+}
 
   if (extra?.rooms && extra.rooms.length > 0) {
     paras.push(
@@ -573,12 +627,26 @@ export function exportPlannerExcel(args: {
           if (!cell) (ws as any)[addr] = cellObj;
 
           // Determine if this day is disabled
-          const di = c - 1; // column index to day index (0-4)
-          const day = addDays(rowWeekStart, di);
-          const isDisabled = isDisabledDay(day, p);
+const di = c - 1;
+const day = addDays(rowWeekStart, di);
+const isDisabled = isDisabledDay(day, p);
 
-          // Get color based on slot start time
-          const color = getSlotColor(slot.start, isDisabled);
+let subjectsInCell: Subject[] = [];
+
+if (!isDisabled) {
+  const dateIso = format(day, "yyyy-MM-dd");
+  const key = `${dateIso}|${si}`;
+  const ids = amap[key] ?? [];
+  subjectsInCell = ids
+    .map((id) => subjects.find((s) => s.id === id))
+    .filter(Boolean) as Subject[];
+}
+
+const color = getFinalCellColor({
+  slotStart: slot.start,
+  isDisabled,
+  subjectsInCell,
+});
 
           const existing = cellObj.s ?? {};
           cellObj.s = {
@@ -783,8 +851,12 @@ export async function exportPlannerWord(args: {
               cellParas.push(new Paragraph({ text: "" }));
             }
 
-            // Get color based on slot start time
-            const color = getSlotColor(slot.start, false);
+            // Determine final cell color based on disabled day, levels in the cell, or slot time
+            const color = getFinalCellColor({
+              slotStart: slot.start,
+              isDisabled: false,
+              subjectsInCell: list,
+            });
 
             rowCells.push(
               new TableCell({
@@ -801,18 +873,19 @@ export async function exportPlannerWord(args: {
           rows.push(new TableRow({ children: rowCells }));
         });
 
-        const table = new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows,
-          borders: {
-            top: { style: BorderStyle.SINGLE, size: 2 },
-            bottom: { style: BorderStyle.SINGLE, size: 2 },
-            left: { style: BorderStyle.SINGLE, size: 2 },
-            right: { style: BorderStyle.SINGLE, size: 2 },
-            insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
-            insideVertical: { style: BorderStyle.SINGLE, size: 1 },
-          },
-        });
+const table = new Table({
+  width: { size: 100, type: WidthType.PERCENTAGE },
+  layout: TableLayoutType.AUTOFIT,
+  rows,
+  borders: {
+    top: { style: BorderStyle.SINGLE, size: 2 },
+    bottom: { style: BorderStyle.SINGLE, size: 2 },
+    left: { style: BorderStyle.SINGLE, size: 2 },
+    right: { style: BorderStyle.SINGLE, size: 2 },
+    insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+    insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+  },
+});
 
         sectionChildren.push(table);
 
