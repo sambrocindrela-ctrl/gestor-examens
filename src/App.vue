@@ -549,17 +549,20 @@ async function performLoadSupabaseCalendar(id: string) {
   const saved = await remoteCalendarRepository.getCalendar(id);
   const snapshot = buildSnapshotFromPlannerDocument(saved.document);
 
-  subjects.value = snapshot.subjects;
-  periods.value = snapshot.periods;
-  activePid.value = snapshot.activePid;
-  slotsPerPeriod.value = snapshot.slotsPerPeriod;
-  assignedPerPeriod.value = snapshot.assignedPerPeriod;
-  roomsData.value = snapshot.roomsData;
-  allowedPeriodsBySubject.value = snapshot.allowedPeriodsBySubject;
-  hiddenSubjectIds.value = snapshot.hiddenSubjectIds;
-  unscheduledBucketByPeriod.value = snapshot.unscheduledBucketByPeriod ?? {};
+subjects.value = snapshot.subjects ?? [];
+periods.value = snapshot.periods ?? [];
+activePid.value = snapshot.activePid ?? snapshot.periods?.[0]?.id ?? 0;
+slotsPerPeriod.value = snapshot.slotsPerPeriod ?? {};
+assignedPerPeriod.value = snapshot.assignedPerPeriod ?? {};
+roomsData.value = snapshot.roomsData ?? {};
+allowedPeriodsBySubject.value = snapshot.allowedPeriodsBySubject ?? {};
+hiddenSubjectIds.value = snapshot.hiddenSubjectIds ?? [];
 
-  syncUnscheduledBucketsForAllPeriods();
+// MUY IMPORTANTE:
+// al cambiar de calendario, reconstruimos la bandeja desde cero
+unscheduledBucketByPeriod.value = {};
+
+syncUnscheduledBucketsForAllPeriods();
 
   selectedCalendarId.value = saved.id;
   refreshBaselineFromCurrent();
